@@ -9,7 +9,7 @@ import { toEng } from '../utils/banglaHelpers';
  * ==========================================
  */
 export default function AddInfo() {
-  const { students, updateStudent } = useStudents();
+  const { students, updateStudent, showAlert, showConfirm } = useStudents();
   
   const [searchId, setSearchId] = useState('');
   const [activeStudent, setActiveStudent] = useState<any>(null);
@@ -21,7 +21,7 @@ export default function AddInfo() {
       setActiveStudent(st);
       setNewInfos([{ name: '', value: '' }]); // reset fields
     } else {
-      alert('ছাত্র পাওয়া যায়নি!');
+      showAlert('ছাত্র পাওয়া যায়নি!', 'warning');
       setActiveStudent(null);
     }
   };
@@ -50,7 +50,7 @@ export default function AddInfo() {
     }));
 
     if (validInfos.length === 0) {
-      alert('দয়া করে তথ্যের নাম ও তথ্য পূরণ করুন!');
+      showAlert('দয়া করে তথ্যের নাম ও তথ্য পূরণ করুন!', 'warning');
       return;
     }
 
@@ -62,19 +62,19 @@ export default function AddInfo() {
     await updateStudent(updated);
     setActiveStudent(updated);
     setNewInfos([{ name: '', value: '' }]);
-    alert('তথ্য সংযুক্ত করা হয়েছে!');
+    showAlert('তথ্য সংযুক্ত করা হয়েছে!', 'success');
   };
 
-  const handleDeleteOldInfo = async (infoId: string) => {
-    if(!window.confirm('এই তথ্যটি মুছতে চান?')) return;
-    
-    const updated = {
-      ...activeStudent,
-      extraInfo: activeStudent.extraInfo.filter((i: any) => i.id !== infoId)
-    };
-    await updateStudent(updated);
-    setActiveStudent(updated);
-  }
+  const handleDeleteOldInfo = (infoId: string) => {
+    showConfirm('এই তথ্যটি মুছতে চান?', async () => {
+      const updated = {
+        ...activeStudent,
+        extraInfo: activeStudent.extraInfo.filter((i: any) => i.id !== infoId)
+      };
+      await updateStudent(updated);
+      setActiveStudent(updated);
+    });
+  };
 
   const inputClass = "w-full p-2 bg-transparent border-2 rounded-sm border-dashed border-gray-400 dark:border-gray-600 outline-none focus:border-emerald-500 dark:focus:border-emerald-400 transition-colors text-gray-900 dark:text-gray-100";
 

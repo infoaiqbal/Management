@@ -10,7 +10,7 @@ import { FeeItem, Fees } from '../types';
  * একজন ছাত্রের পূর্ণাঙ্গ প্রোফাইল এবং পেমেন্ট সামারি দেখা যাবে।
  */
 export default function SearchInfo() {
-  const { students } = useStudents();
+  const { students, showAlert } = useStudents();
   const [searchId, setSearchId] = useState('');
   const [student, setStudent] = useState<any>(null);
 
@@ -19,7 +19,7 @@ export default function SearchInfo() {
     if (st) {
       setStudent(st);
     } else {
-      alert('ছাত্র পাওয়া যায়নি!');
+      showAlert('ছাত্র পাওয়া যায়নি!', 'warning');
       setStudent(null);
     }
   };

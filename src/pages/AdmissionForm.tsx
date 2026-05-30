@@ -14,7 +14,7 @@ import CustomSelect from '../components/CustomSelect';
  */
 
 export default function AdmissionForm({ editId, onSuccess }: { editId?: string | null; onSuccess?: () => void }) {
-  const { students, addStudent, updateStudent } = useStudents();
+  const { students, addStudent, updateStudent, showAlert } = useStudents();
   
   // স্বয়ংক্রিয় দাখেলা নাম্বার জেনারেট (Auto generate Daquela Number)
   const generateDaquela = () => {
@@ -146,11 +146,11 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
 
     if (editId) {
       await updateStudent(newStudent);
-      alert('ছাত্রের তথ্য সফলভাবে আপডেট হয়েছে!');
+      showAlert('ছাত্রের তথ্য সফলভাবে আপডেট হয়েছে!', 'success');
       if (onSuccess) onSuccess();
     } else {
       await addStudent(newStudent);
-      alert('ছাত্র ভর্তি সম্পন্ন হয়েছে!');
+      showAlert('ছাত্র ভর্তি সম্পন্ন হয়েছে!', 'success');
       
       // Reset Form
       setFormData(prev => ({

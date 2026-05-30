@@ -11,7 +11,7 @@ import CustomSelect from '../components/CustomSelect';
  * এখানে দাখেলা নাম্বার ইনপুট দিলে প্রযোজ্য ফিস সমূহ পেমেন্ট করা যাবে।
  */
 export default function FeeCollection() {
-  const { students, updateStudent } = useStudents();
+  const { students, updateStudent, showAlert } = useStudents();
   
   const [searchId, setSearchId] = useState('');
   const [activeStudent, setActiveStudent] = useState<any>(null);
@@ -23,7 +23,7 @@ export default function FeeCollection() {
     if (st) {
       setActiveStudent(st);
     } else {
-      alert('এই নাম্বারে কোনো ছাত্র পাওয়া যায়নি!');
+      showAlert('এই নাম্বারে কোনো ছাত্র পাওয়া যায়নি!', 'warning');
       setActiveStudent(null);
     }
   };
@@ -52,7 +52,7 @@ export default function FeeCollection() {
 
     await updateStudent(updatedStudent);
     setActiveStudent(updatedStudent); // Update local state to reflect UI instantly
-    alert('পেমেন্ট গ্রহণ সম্পন্ন হয়েছে!');
+    showAlert('পেমেন্ট গ্রহণ সম্পন্ন হয়েছে!', 'success');
   };
 
   // স্টাইল
