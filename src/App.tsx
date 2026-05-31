@@ -32,7 +32,7 @@ export default function App() {
   return (
     <StudentProvider>
       <Layout activeMenuItem={activeMenuItem} setActiveMenuItem={setActiveMenuItem}>
-        {activeMenuItem === 'home' && <Home />}
+        {activeMenuItem === 'home' && <Home onEdit={handleEdit} onNavigate={setActiveMenuItem} />}
         {activeMenuItem === 'admission' && <AdmissionForm editId={editingStudentId} onSuccess={handleAdmissionSuccess} />}
         {activeMenuItem === 'forms' && <FormList onEdit={handleEdit} />}
         {activeMenuItem === 'fees' && <FeeCollection />}

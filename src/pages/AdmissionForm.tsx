@@ -140,6 +140,7 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
       isHafiz: formData.isHafiz === 'হ্যাঁ',
       wantsZakat: formData.wantsZakat === 'হ্যাঁ',
       fees: feesData,
+      admissionDate: editId ? (students.find(s => s.id === editId)?.admissionDate || new Date().toISOString()) : new Date().toISOString(),
       extraInfo: editId ? (students.find(s => s.id === editId)?.extraInfo || []) : [],
       payments: editId ? (students.find(s => s.id === editId)?.payments || []) : []
     };

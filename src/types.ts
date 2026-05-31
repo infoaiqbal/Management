@@ -65,6 +65,7 @@ export interface Student {
   admissionClass: string;
   studentType: string;
   wantsZakat: boolean;
+  admissionDate?: string;
   fees: Fees;
   extraInfo: ExtraInfo[];
   payments: Payment[];

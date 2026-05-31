@@ -14,20 +14,19 @@ export default defineConfig(() => {
         registerType: 'autoUpdate',
         injectRegister: 'auto',
         manifest: {
-          name: 'Madrasa Applet',
-          short_name: 'MadrasaApp',
-          description: 'A student management application for Madrasa',
-          theme_color: '#10b981',
+          name: 'Management App',
+          short_name: 'Management',
+          theme_color: '#ffffff',
           background_color: '#ffffff',
           display: 'standalone',
           icons: [
             {
-              src: '192x192.png',
+              src: 'pwa-192x192.png',
               sizes: '192x192',
               type: 'image/png'
             },
             {
-              src: '512x512.png',
+              src: 'pwa-512x512.png',
               sizes: '512x512',
               type: 'image/png'
             }
