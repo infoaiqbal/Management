@@ -1,6 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Student } from '../types';
 import localforage from 'localforage';
+import { auth, db } from '../firebase';
+import { onAuthStateChanged, User, signOut } from 'firebase/auth';
+import { collection, onSnapshot, doc, setDoc, deleteDoc, query, where } from 'firebase/firestore';
 
 interface StudentContextType {
   students: Student[];
@@ -12,6 +15,8 @@ interface StudentContextType {
   toggleTheme: () => void;
   showAlert: (message: string, type?: 'success' | 'warning' | 'error' | 'info') => void;
   showConfirm: (message: string, onConfirm: () => void, onCancel?: () => void) => void;
+  user: User | null;
+  logout: () => void;
 }
 
 interface AlertState {
@@ -32,6 +37,7 @@ const StudentContext = createContext<StudentContextType | undefined>(undefined);
 export const StudentProvider = ({ children }: { children: ReactNode }) => {
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
   
   // Theme state
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
@@ -63,20 +69,44 @@ export const StudentProvider = ({ children }: { children: ReactNode }) => {
       document.documentElement.classList.add('dark');
     }
 
-    // Load students
-    try {
-      localforage.getItem<Student[]>('madrasa_students').then((data) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      if (!currentUser) {
+        setStudents([]);
+        setLoading(false);
+      }
+    });
+
+    return () => unsubscribeAuth();
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    
+    setLoading(true);
+    const q = query(collection(db, 'students'), where('userId', '==', user.uid));
+    
+    const unsubscribeData = onSnapshot(q, (snapshot) => {
+      const data: Student[] = [];
+      snapshot.forEach(doc => {
+        data.push(doc.data() as Student);
+      });
+      setStudents(data);
+      // Cache for offline support (optional, firestore has its own cache but just in case)
+      localforage.setItem(`madrasa_students_${user.uid}`, data).catch(console.error);
+      setLoading(false);
+    }, (error) => {
+      console.error("Firestore Error:", error);
+      
+      // Fallback to localforage
+      localforage.getItem<Student[]>(`madrasa_students_${user.uid}`).then((data) => {
         if (data) setStudents(data);
         setLoading(false);
-      }).catch(err => {
-        console.error("Localforage load error", err);
-        setLoading(false);
       });
-    } catch (e) {
-      console.error(e);
-      setLoading(false);
-    }
-  }, []);
+    });
+
+    return () => unsubscribeData();
+  }, [user]);
 
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
@@ -89,32 +119,45 @@ export const StudentProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const saveToStorage = async (data: Student[]) => {
-    setStudents(data);
+  const addStudent = async (student: Student) => {
+    if (!user) return;
     try {
-      await localforage.setItem('madrasa_students', data);
-    } catch(err) {
-      console.error("Localforage save error", err);
+      const studentData = { ...student, userId: user.uid };
+      await setDoc(doc(db, 'students', student.id), studentData);
+    } catch (err) {
+      console.error("Error adding student", err);
+      showAlert('তথ্য সংরক্ষণ করতে সমস্যা হয়েছে!', 'error');
     }
   };
 
-  const addStudent = async (student: Student) => {
-    const newData = [...students, student];
-    await saveToStorage(newData);
-  };
-
   const updateStudent = async (updatedStudent: Student) => {
-    const newData = students.map(s => s.id === updatedStudent.id ? updatedStudent : s);
-    await saveToStorage(newData);
+    if (!user) return;
+    try {
+      const studentData = { ...updatedStudent, userId: user.uid };
+      await setDoc(doc(db, 'students', updatedStudent.id), studentData);
+    } catch (err) {
+      console.error("Error updating student", err);
+      showAlert('তথ্য আপডেট করতে সমস্যা হয়েছে!', 'error');
+    }
   };
 
   const deleteStudent = async (id: string) => {
-    const newData = students.filter(s => s.id !== id);
-    await saveToStorage(newData);
+    if (!user) return;
+    try {
+      await deleteDoc(doc(db, 'students', id));
+    } catch(err) {
+      console.error("Error deleting student", err);
+      showAlert('তথ্য মুছতে সমস্যা হয়েছে!', 'error');
+    }
   };
 
+  const logout = () => {
+    signOut(auth);
+  };
+
+
   return (
-    <StudentContext.Provider value={{ students, addStudent, updateStudent, deleteStudent, loading, theme, toggleTheme, showAlert, showConfirm }}>
+    <StudentContext.Provider value={{ students, addStudent, updateStudent, deleteStudent, loading, theme, toggleTheme, showAlert, showConfirm, user, logout }}>
       {children}
       
       {/* Custom Alert Modal */}

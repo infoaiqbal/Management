@@ -1,0 +1,52 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helpers
+    function isSignedIn() { return request.auth != null; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    function isValidStudent(data) {
+      return data.keys().hasAll(['id', 'name', 'userId'])
+        // Optional key check would normally be here, but we will simplify
+        && data.id is string
+        && data.id.size() <= 100
+        && data.name is string
+        && data.name.size() <= 200
+        && data.userId == request.auth.uid; // Identity Integrity
+    }
+
+    match /students/{studentId} {
+      // Allow read if user is the owner
+      allow read: if isSignedIn() && existing().userId == request.auth.uid;
+
+      // Allow list if resource.data.userId == request.auth.uid
+      // Wait, allow list and read are basically the same rules.
+      
+      // Allow create
+      // Using hasAll for keys + specific size constraint
+      allow create: if isSignedIn() 
+        && isValidId(studentId)
+        && isValidStudent(incoming());
+
+      // Allow update
+      allow update: if isSignedIn()
+        && isValidId(studentId)
+        && existing().userId == request.auth.uid // Must own it
+        && isValidStudent(incoming()) // Must remain valid and same owner
+        && incoming().userId == existing().userId; // Immortal Field
+        
+      // Allow delete
+      allow delete: if isSignedIn()
+        && isValidId(studentId)
+        && existing().userId == request.auth.uid;
+    }
+  }
+}

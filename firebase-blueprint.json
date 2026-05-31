@@ -1,0 +1,49 @@
+{
+  "entities": {
+    "Student": {
+      "title": "Student",
+      "description": "Student profile holding data",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "dob": { "type": "string" },
+        "nid": { "type": "string" },
+        "bloodGroup": { "type": "string" },
+        "isHafiz": { "type": "boolean" },
+        "fatherName": { "type": "string" },
+        "motherName": { "type": "string" },
+        "fatherOccupation": { "type": "string" },
+        "presentAddress": { "type": "object" },
+        "permanentAddress": { "type": "object" },
+        "guardianName": { "type": "string" },
+        "guardianRelation": { "type": "string" },
+        "guardianOccupation": { "type": "string" },
+        "guardianMobile": { "type": "string" },
+        "guardianEmail": { "type": "string" },
+        "murubbiName": { "type": "string" },
+        "murubbiMobile": { "type": "string" },
+        "murubbiEmail": { "type": "string" },
+        "prevInstitutionName": { "type": "string" },
+        "prevInstitutionAddress": { "type": "string" },
+        "prevInstitutionStudied": { "type": "string" },
+        "admissionSection": { "type": "string" },
+        "admissionClass": { "type": "string" },
+        "studentType": { "type": "string" },
+        "wantsZakat": { "type": "boolean" },
+        "admissionDate": { "type": "string" },
+        "fees": { "type": "object" },
+        "extraInfo": { "type": "array" },
+        "payments": { "type": "array" },
+        "userId": { "type": "string" }
+      },
+      "required": ["id", "name", "userId"]
+    }
+  },
+  "firestore": {
+    "/students/{studentId}": {
+      "schema": { "$ref": "#/entities/Student" },
+      "description": "List of students for a specific user"
+    }
+  }
+}
