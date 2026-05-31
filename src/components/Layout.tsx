@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, Moon, Sun, X } from 'lucide-react';
+import { Menu, Moon, Sun, X, Home, UserPlus, Files, Wallet, List, Database, Search, User } from 'lucide-react';
 import { useStudents } from '../store/StudentContext';
 
 
@@ -23,14 +23,14 @@ export default function Layout({ children, activeMenuItem, setActiveMenuItem }: 
 
   // সাইডবারের মেনু সমূহ
   const menuItems = [
-    { id: 'home', label: 'হোম' },
-    { id: 'admission', label: 'ভর্তি ফরম' },
-    { id: 'forms', label: 'ফরম সমূহ' },
-    { id: 'fees', label: 'বেতন গ্রহণ' },
-    { id: 'reports', label: 'তালিকা তৈরি' },
-    { id: 'add_info', label: 'তথ্য সংযোগ' },
-    { id: 'search_info', label: 'তথ্য খুঁজুন' },
-    { id: 'account', label: 'একাউন্ট' },
+    { id: 'home', label: 'হোম', icon: <Home size={18} /> },
+    { id: 'admission', label: 'ভর্তি ফরম', icon: <UserPlus size={18} /> },
+    { id: 'forms', label: 'ফরম সমূহ', icon: <Files size={18} /> },
+    { id: 'fees', label: 'বেতন গ্রহণ', icon: <Wallet size={18} /> },
+    { id: 'reports', label: 'তালিকা তৈরি', icon: <List size={18} /> },
+    { id: 'add_info', label: 'তথ্য সংযোগ', icon: <Database size={18} /> },
+    { id: 'search_info', label: 'তথ্য খুঁজুন', icon: <Search size={18} /> },
+    { id: 'account', label: 'একাউন্ট', icon: <User size={18} /> },
   ];
 
   return (
@@ -66,13 +66,16 @@ export default function Layout({ children, activeMenuItem, setActiveMenuItem }: 
                     setActiveMenuItem(item.id);
                     setIsSidebarOpen(false); // Close sidebar on mobile after click
                   }}
-                  className={`w-full text-left px-6 py-3 transition-colors ${
+                  className={`w-full text-left px-6 py-3 transition-colors flex items-center gap-3 ${
                     activeMenuItem === item.id 
                       ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-r-4 border-emerald-500 font-medium' 
                       : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
                   }`}
                 >
-                  {item.label}
+                  <span className={`${activeMenuItem === item.id ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                    {item.icon}
+                  </span>
+                  <span>{item.label}</span>
                 </button>
               </li>
             ))}
