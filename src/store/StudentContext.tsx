@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Student } from '../types';
+import { Student, MadrasaSettings } from '../types';
 import localforage from 'localforage';
 import { auth, db } from '../firebase';
 import { onAuthStateChanged, User, signOut } from 'firebase/auth';
@@ -7,6 +7,8 @@ import { collection, onSnapshot, doc, setDoc, deleteDoc, query, where } from 'fi
 
 interface StudentContextType {
   students: Student[];
+  settings: MadrasaSettings;
+  updateSettings: (newSettings: MadrasaSettings) => Promise<void>;
   addStudent: (student: Student) => Promise<void>;
   updateStudent: (student: Student) => Promise<void>;
   deleteStudent: (id: string) => Promise<void>;
@@ -34,8 +36,17 @@ interface ConfirmState {
 
 const StudentContext = createContext<StudentContextType | undefined>(undefined);
 
+const defaultSettings: MadrasaSettings = {
+  madrasaName: 'মাদরাসাতুল হুদা',
+  madrasaLogo: '',
+  adminName: 'এডমিন',
+  address: 'ঢাকা, বাংলাদেশ',
+  studentGender: 'boys'
+};
+
 export const StudentProvider = ({ children }: { children: ReactNode }) => {
   const [students, setStudents] = useState<Student[]>([]);
+  const [settings, setSettings] = useState<MadrasaSettings>(defaultSettings);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   
@@ -73,6 +84,7 @@ export const StudentProvider = ({ children }: { children: ReactNode }) => {
       setUser(currentUser);
       if (!currentUser) {
         setStudents([]);
+        setSettings(defaultSettings);
         setLoading(false);
       }
     });
@@ -84,6 +96,16 @@ export const StudentProvider = ({ children }: { children: ReactNode }) => {
     if (!user) return;
     
     setLoading(true);
+    
+    // Listen to settings
+    const settingsUnsub = onSnapshot(doc(db, 'settings', user.uid), (docSnap) => {
+      if (docSnap.exists()) {
+        setSettings({ ...defaultSettings, ...(docSnap.data() as MadrasaSettings) });
+      } else {
+        setSettings(defaultSettings);
+      }
+    });
+
     const q = query(collection(db, 'students'), where('userId', '==', user.uid));
     
     const unsubscribeData = onSnapshot(q, (snapshot) => {
@@ -105,8 +127,23 @@ export const StudentProvider = ({ children }: { children: ReactNode }) => {
       });
     });
 
-    return () => unsubscribeData();
+    return () => {
+      unsubscribeData();
+      settingsUnsub();
+    };
   }, [user]);
+
+  const updateSettings = async (newSettings: MadrasaSettings) => {
+    if (!user) return;
+    try {
+      await setDoc(doc(db, 'settings', user.uid), newSettings);
+      setSettings(newSettings);
+      showAlert('সেটিংস সেভ হয়েছে!', 'success');
+    } catch(err) {
+      console.error(err);
+      showAlert('সেটিংস সেভ করতে সমস্যা হয়েছে!', 'error');
+    }
+  }
 
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
@@ -160,7 +197,7 @@ export const StudentProvider = ({ children }: { children: ReactNode }) => {
 
 
   return (
-    <StudentContext.Provider value={{ students, addStudent, updateStudent, deleteStudent, loading, theme, toggleTheme, showAlert, showConfirm, user, logout }}>
+    <StudentContext.Provider value={{ students, settings, updateSettings, addStudent, updateStudent, deleteStudent, loading, theme, toggleTheme, showAlert, showConfirm, user, logout }}>
       {children}
       
       {/* Custom Alert Modal */}

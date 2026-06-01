@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useStudents } from '../store/StudentContext';
+import { getStudentTerms } from '../utils/studentTerms';
 import { toBng, toEng, bngMonths, bngInstallments } from '../utils/banglaHelpers';
 import { FeeItem, Fees } from '../types';
 import CustomSelect from '../components/CustomSelect';
@@ -10,7 +11,8 @@ import CustomSelect from '../components/CustomSelect';
  * ==========================================
  */
 export default function FeeCollection() {
-  const { students, updateStudent, showAlert, showConfirm } = useStudents();
+  const { students, settings, updateStudent, showAlert, showConfirm } = useStudents();
+  const terms = getStudentTerms(settings.studentGender);
   
   const [searchId, setSearchId] = useState('');
   const [activeStudent, setActiveStudent] = useState<any>(null);
@@ -20,7 +22,7 @@ export default function FeeCollection() {
     if (st) {
       setActiveStudent(st);
     } else {
-      showAlert('এই নাম্বারে কোনো ছাত্র পাওয়া যায়নি!', 'warning');
+      showAlert(`এই নাম্বারে কোনো ${terms.singular} পাওয়া যায়নি!`, 'warning');
       setActiveStudent(null);
     }
   };

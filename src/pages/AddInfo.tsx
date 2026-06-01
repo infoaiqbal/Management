@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useStudents } from '../store/StudentContext';
+import { getStudentTerms } from '../utils/studentTerms';
 import { Plus, Trash2 } from 'lucide-react';
 import { toEng } from '../utils/banglaHelpers';
 
@@ -9,7 +10,8 @@ import { toEng } from '../utils/banglaHelpers';
  * ==========================================
  */
 export default function AddInfo() {
-  const { students, updateStudent, showAlert, showConfirm } = useStudents();
+  const { students, settings, updateStudent, showAlert, showConfirm } = useStudents();
+  const terms = getStudentTerms(settings.studentGender);
   
   const [searchId, setSearchId] = useState('');
   const [activeStudent, setActiveStudent] = useState<any>(null);
@@ -21,7 +23,7 @@ export default function AddInfo() {
       setActiveStudent(st);
       setNewInfos([{ name: '', value: '' }]); // reset fields
     } else {
-      showAlert('ছাত্র পাওয়া যায়নি!', 'warning');
+      showAlert(`কোনো ${terms.singular} পাওয়া যায়নি!`, 'warning');
       setActiveStudent(null);
     }
   };

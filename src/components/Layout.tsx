@@ -19,7 +19,7 @@ interface LayoutProps {
 
 export default function Layout({ children, activeMenuItem, setActiveMenuItem }: LayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const { theme, toggleTheme } = useStudents();
+  const { theme, toggleTheme, settings } = useStudents();
 
   // সাইডবারের মেনু সমূহ
   const menuItems = [
@@ -34,7 +34,7 @@ export default function Layout({ children, activeMenuItem, setActiveMenuItem }: 
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0a1510] text-gray-900 dark:text-gray-100 font-sans transition-colors duration-300 flex">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0a1510] text-gray-900 dark:text-gray-100 font-sans transition-colors duration-300 flex font-kalpurush">
       {/* 
         =================
         সাইডবার অংশ (Sidebar Navigation)
@@ -51,7 +51,14 @@ export default function Layout({ children, activeMenuItem, setActiveMenuItem }: 
       {/* Sidebar Content */}
       <aside className={`print:hidden fixed inset-y-0 left-0 w-64 bg-white dark:bg-[#0f2119] shadow-lg transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 transition-transform duration-300 z-50 flex flex-col border-r border-gray-200 dark:border-gray-800`}>
         <div className="p-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-800">
-          <h1 className="text-xl font-bold text-emerald-800 dark:text-emerald-400">মাদরাসা ডাটাবেস</h1>
+          <div className="flex items-center gap-2">
+            {settings.madrasaLogo && (
+              <img src={settings.madrasaLogo} alt="Logo" className="w-8 h-8 object-contain rounded-full" />
+            )}
+            <h1 className="flex-1 text-lg font-bold text-emerald-800 dark:text-emerald-400 line-clamp-2">
+              {settings.madrasaName || 'মাদরাসা ডাটাবেস'}
+            </h1>
+          </div>
           <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md">
             <X size={20} />
           </button>

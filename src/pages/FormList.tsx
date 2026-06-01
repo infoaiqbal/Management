@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useStudents } from '../store/StudentContext';
+import { getStudentTerms } from '../utils/studentTerms';
 import { Pencil, Trash2 } from 'lucide-react';
 import { toBng } from '../utils/banglaHelpers';
 import { Student } from '../types';
@@ -11,7 +12,8 @@ import { Student } from '../types';
  * ইতোপূর্বে যত ভর্তি ফরম পূরণ করা হয়েছে, সব এখানে শো করবে।
  */
 export default function FormList({ onEdit }: { onEdit?: (id: string) => void }) {
-  const { students, deleteStudent } = useStudents();
+  const { students, settings, deleteStudent } = useStudents();
+  const terms = getStudentTerms(settings.studentGender);
   
   if (students.length === 0) {
     return (
@@ -25,7 +27,7 @@ export default function FormList({ onEdit }: { onEdit?: (id: string) => void }) 
     <div className="max-w-6xl mx-auto">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">সকল ভর্তি ফরম</h2>
-        <p className="text-gray-500 dark:text-gray-400 mt-1">মোট ছাত্র: {toBng(students.length)} জন</p>
+        <p className="text-gray-500 dark:text-gray-400 mt-1">মোট {terms.title}: {toBng(students.length)} জন</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useStudents } from '../store/StudentContext';
+import { getStudentTerms } from '../utils/studentTerms';
 import { toBng, toEng } from '../utils/banglaHelpers';
 import { Student, Address, Fees, FeeItem } from '../types';
 import AddressFields from '../components/AddressFields';
 import CustomSelect from '../components/CustomSelect';
+import { BookOpen } from 'lucide-react';
 
 /**
  * ==========================================
@@ -14,7 +16,7 @@ import CustomSelect from '../components/CustomSelect';
  */
 
 export default function AdmissionForm({ editId, onSuccess }: { editId?: string | null; onSuccess?: () => void }) {
-  const { students, addStudent, updateStudent, showAlert } = useStudents();
+  const { students, settings, addStudent, updateStudent, showAlert } = useStudents();
   
   // স্বয়ংক্রিয় দাখেলা নাম্বার জেনারেট (Auto generate Daquela Number)
   const generateDaquela = () => {
@@ -29,6 +31,7 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
     name: '',
     dob: '',
     nid: '',
+    gender: '' as 'boy' | 'girl' | '',
     bloodGroup: '',
     isHafiz: 'না',
     fatherName: '',
@@ -155,13 +158,16 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
       payments: editId ? (students.find(s => s.id === editId)?.payments || []) : []
     };
 
+    const currentGender = settings.studentGender === 'both' ? (formData.gender === 'girl' ? 'girls' : 'boys') : settings.studentGender;
+    const terms = getStudentTerms(currentGender);
+
     if (editId) {
       await updateStudent(newStudent);
-      showAlert('ছাত্রের তথ্য সফলভাবে আপডেট হয়েছে!', 'success');
+      showAlert(`${terms.singular_er} তথ্য সফলভাবে আপডেট হয়েছে!`, 'success');
       if (onSuccess) onSuccess();
     } else {
       await addStudent(newStudent);
-      showAlert('ছাত্র ভর্তি সম্পন্ন হয়েছে!', 'success');
+      showAlert(`${terms.singular} ভর্তি সম্পন্ন হয়েছে!`, 'success');
       
       // Reset Form
       setFormData(prev => ({
@@ -181,11 +187,14 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
   const inputClass = "w-full p-2 bg-transparent border-2 rounded-sm border-dashed border-gray-400 dark:border-gray-600 print:border-gray-400 print:text-black outline-none focus:border-emerald-500 dark:focus:border-emerald-400 transition-colors text-gray-900 dark:text-gray-100";
   const selectClass = "w-full p-2 bg-transparent border-2 rounded-sm border-dashed border-gray-400 dark:border-gray-600 print:border-gray-400 print:text-black outline-none focus:border-emerald-500 dark:focus:border-emerald-400 text-gray-900 dark:text-gray-100 [&>option]:bg-white dark:[&>option]:bg-gray-800";
 
+  const currentGender = settings.studentGender === 'both' ? (formData.gender === 'girl' ? 'girls' : 'boys') : settings.studentGender;
+  const terms = getStudentTerms(currentGender);
+
   return (
     <div className="max-w-4xl mx-auto bg-white dark:bg-[#0f2119] print:dark:bg-white print:text-black print:p-0 print:shadow-none p-6 lg:p-8 rounded-lg shadow-sm">
       <div className="mb-8 border-b-2 border-emerald-500 pb-4">
         <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 print:text-black text-center">
-          {editId ? 'ছাত্রের তথ্য সম্পাদনা' : 'ছাত্র ভর্তি ফরম'}
+          {editId ? `${terms.singular_er} তথ্য সম্পাদনা` : `${terms.singular} ভর্তি ফরম`}
         </h2>
       </div>
 
@@ -199,9 +208,40 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
               <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">দাখেলা নাম্বার (অটোমেটিক)</label>
               <input type="text" readOnly value={formData.id} className={`${inputClass} bg-gray-50 dark:bg-gray-800/50 cursor-not-allowed`} />
             </div>
+            
+            {settings.studentGender === 'both' && (
+              <div>
+                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2">আপনি কি</label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input 
+                      type="radio" 
+                      name="gender" 
+                      value="boy" 
+                      checked={formData.gender === 'boy'} 
+                      onChange={handleChange} 
+                      className="accent-emerald-600"
+                    />
+                    <span>ছেলে</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input 
+                      type="radio" 
+                      name="gender" 
+                      value="girl" 
+                      checked={formData.gender === 'girl'} 
+                      onChange={handleChange} 
+                      className="accent-emerald-600"
+                    />
+                    <span>মেয়ে</span>
+                  </label>
+                </div>
+              </div>
+            )}
+
             <div>
               <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">নাম</label>
-              <input required type="text" name="name" value={formData.name} onChange={handleChange} className={inputClass} placeholder="ছাত্রের নাম..." list="student-names" />
+              <input required type="text" name="name" value={formData.name} onChange={handleChange} className={inputClass} placeholder={`${terms.singular_er} নাম...`} list="student-names" />
               {/* সাজেস্ট করার জন্য ডাটালিস্ট */}
               <datalist id="student-names">
                 {students.map(s => <option key={s.id} value={s.name} />)}

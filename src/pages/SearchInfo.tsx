@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useStudents } from '../store/StudentContext';
+import { getStudentTerms } from '../utils/studentTerms';
 import { toBng, toEng } from '../utils/banglaHelpers';
 import { FeeItem, Fees } from '../types';
 
@@ -10,7 +11,8 @@ import { FeeItem, Fees } from '../types';
  * একজন ছাত্রের পূর্ণাঙ্গ প্রোফাইল এবং পেমেন্ট সামারি দেখা যাবে।
  */
 export default function SearchInfo() {
-  const { students, showAlert } = useStudents();
+  const { students, settings, showAlert } = useStudents();
+  const terms = getStudentTerms(settings.studentGender);
   const [searchId, setSearchId] = useState('');
   const [student, setStudent] = useState<any>(null);
 
@@ -19,7 +21,7 @@ export default function SearchInfo() {
     if (st) {
       setStudent(st);
     } else {
-      showAlert('ছাত্র পাওয়া যায়নি!', 'warning');
+      showAlert(`কোনো ${terms.singular} পাওয়া যায়নি!`, 'warning');
       setStudent(null);
     }
   };
@@ -28,8 +30,8 @@ export default function SearchInfo() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      <div className="bg-white dark:bg-[#0f2119] p-6 lg:p-8 rounded-lg shadow-sm">
-        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-6 border-b border-emerald-500 pb-2">ছাত্রের পূর্ণাঙ্গ প্রোফাইল</h2>
+      <div className="bg-white dark:bg-[#0f2119] p-6 lg:p-8 rounded-lg shadow-sm font-kalpurush">
+        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-6 border-b border-emerald-500 pb-2">{terms.singular_er} পূর্ণাঙ্গ প্রোফাইল</h2>
         
         <div className="flex gap-4 items-end">
           <div className="flex-1 max-w-sm">

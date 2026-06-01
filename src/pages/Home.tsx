@@ -3,6 +3,7 @@ import { useStudents } from '../store/StudentContext';
 import { Users, UserPlus, FileClock, X } from 'lucide-react';
 import { toBng, bngMonths } from '../utils/banglaHelpers';
 import { Student } from '../types';
+import { getStudentTerms } from '../utils/studentTerms';
 import { motion, useInView, useSpring, useTransform, AnimatePresence } from 'motion/react';
 
 const FEEG_LABELS: Record<string, string> = {
@@ -37,7 +38,8 @@ function RollingNumber({ value }: { value: number }) {
 }
 
 export default function Home({ onEdit, onNavigate }: { onEdit?: (id: string) => void, onNavigate?: (page: string) => void }) {
-  const { students } = useStudents();
+  const { students, settings } = useStudents();
+  const terms = getStudentTerms(settings.studentGender);
   const [modalData, setModalData] = useState<{ title: string; students: any[]; showDetails?: boolean } | null>(null);
 
   const stats = useMemo(() => {
@@ -122,7 +124,7 @@ export default function Home({ onEdit, onNavigate }: { onEdit?: (id: string) => 
         {/* Total Students Box */}
         <div className="bg-white dark:bg-[#0f2119] p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 transition-all">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-gray-600 dark:text-gray-400 font-medium text-lg">মোট ছাত্র</h3>
+            <h3 className="text-gray-600 dark:text-gray-400 font-medium text-lg">মোট {terms.title}</h3>
             <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/40 flex items-center justify-center">
               <Users className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
@@ -140,7 +142,7 @@ export default function Home({ onEdit, onNavigate }: { onEdit?: (id: string) => 
               <div 
                 key={jamat} 
                 className="flex justify-between items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 p-1 rounded transition-colors"
-                onClick={() => setModalData({ title: `মোট ছাত্র - ${jamat}`, students: list })}
+                onClick={() => setModalData({ title: `মোট ${terms.title} - ${jamat}`, students: list })}
               >
                 <span className="text-gray-600 dark:text-gray-400">{jamat}:</span>
                 <span className="font-semibold text-gray-800 dark:text-gray-200">{toBng(list.length)} জন</span>

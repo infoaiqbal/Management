@@ -13,7 +13,7 @@ import FeeCollection from './pages/FeeCollection';
 import ReportGeneration from './pages/ReportGeneration';
 import AddInfo from './pages/AddInfo';
 import SearchInfo from './pages/SearchInfo';
-import AccountPlaceholder from './pages/AccountPlaceholder';
+import Account from './pages/Account';
 import Auth from './components/Auth';
 
 function MainApp() {
@@ -52,7 +52,7 @@ function MainApp() {
       {activeMenuItem === 'reports' && <ReportGeneration />}
       {activeMenuItem === 'add_info' && <AddInfo />}
       {activeMenuItem === 'search_info' && <SearchInfo />}
-      {activeMenuItem === 'account' && <AccountPlaceholder />}
+      {activeMenuItem === 'account' && <Account />}
     </Layout>
   );
 }

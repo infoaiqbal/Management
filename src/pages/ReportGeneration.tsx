@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useStudents } from '../store/StudentContext';
+import { getStudentTerms } from '../utils/studentTerms';
 import { toBng } from '../utils/banglaHelpers';
 import { Printer } from 'lucide-react';
 import CustomSelect from '../components/CustomSelect';
@@ -11,7 +12,8 @@ import CustomSelect from '../components/CustomSelect';
  * PDF প্রিন্ট এর জন্য।
  */
 export default function ReportGeneration() {
-  const { students } = useStudents();
+  const { students, settings } = useStudents();
+  const terms = getStudentTerms(settings.studentGender);
   
   const [reportType, setReportType] = useState('studentList');
   const [filterClass, setFilterClass] = useState('');
@@ -51,10 +53,10 @@ export default function ReportGeneration() {
               onChange={val => setReportType(val)}
               className="w-full p-2 bg-transparent border-b-2 border-dashed border-gray-400 dark:border-gray-600 focus:border-emerald-500 outline-none text-gray-900 dark:text-gray-100"
               options={[
-                { value: 'studentList', label: 'সাধারণ ছাত্র তালিকা' },
+                { value: 'studentList', label: `সাধারণ ${terms.singular} তালিকা` },
                 { value: 'hafizList', label: 'হাফেজদের তালিকা' },
                 { value: 'bloodGroup', label: 'রক্তের গ্রুপ তালিকা' },
-                { value: 'mobileList', label: 'অভিভাবকের মোবাইল নম্বর' },
+                { value: 'mobileList', label: 'অভিভাবকের মোবাইল নম্বর' }
               ]}
             />
           </div>
@@ -85,10 +87,13 @@ export default function ReportGeneration() {
       */}
       <div className="bg-white p-8 rounded-lg shadow-sm print:shadow-none print:p-0 dark:bg-[#0f2119] print:dark:bg-white print:text-black">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold dark:text-gray-100 print:text-black mb-2">মাদরাসা বায়তুল উলুম</h1> {/* You can customize name */}
+          {settings.madrasaLogo && (
+            <img src={settings.madrasaLogo} alt={settings.madrasaName} className="h-16 mx-auto mb-2 object-contain" />
+          )}
+          <h1 className="text-2xl font-bold dark:text-gray-100 print:text-black mb-2">{settings.madrasaName || 'মাদরাসা বায়তুল উলুম'}</h1>
           <h2 className="text-lg font-semibold border-b-2 border-gray-300 inline-block pb-1 dark:text-gray-200 print:text-gray-800">
-            {reportType === 'studentList' && 'ছাত্র তালিকা'}
-            {reportType === 'hafizList' && 'হিফজ সম্পন্ন ছাত্রদের তালিকা'}
+            {reportType === 'studentList' && `${terms.singular} তালিকা`}
+            {reportType === 'hafizList' && `হিফজ সম্পন্ন ${terms.plural_der} তালিকা`}
             {reportType === 'bloodGroup' && 'রক্তের গ্রুপ অনুযায়ী তালিকা'}
             {reportType === 'mobileList' && 'অভিভাবকের যোগাযোগ তালিকা'}
             {filterClass && ` (জামাত: ${filterClass})`}

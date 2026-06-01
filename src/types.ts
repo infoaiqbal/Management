@@ -7,6 +7,14 @@ export interface Address {
   village: string;
 }
 
+export interface MadrasaSettings {
+  madrasaName: string;
+  madrasaLogo: string;
+  adminName: string;
+  address: string;
+  studentGender: 'boys' | 'girls' | 'both';
+}
+
 export type FeeType = 'monthly' | 'one-time' | 'installment';
 
 export interface FeeItem {
@@ -64,6 +72,7 @@ export interface Student {
   admissionSection: string;
   admissionClass: string;
   studentType: string;
+  gender?: 'boy' | 'girl' | '';
   wantsZakat: boolean;
   admissionDate?: string;
   fees: Fees;
