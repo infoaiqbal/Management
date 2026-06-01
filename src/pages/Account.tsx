@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useStudents } from '../store/StudentContext';
+import { Edit2, X, LogOut } from 'lucide-react';
 
 export default function Account() {
   const { user, logout, settings, updateSettings, showAlert } = useStudents();
   
   const [formData, setFormData] = useState(settings);
+  const [isEditing, setIsEditing] = useState(false);
 
   React.useEffect(() => {
     setFormData(settings);
@@ -18,39 +20,75 @@ export default function Account() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     await updateSettings(formData);
+    setIsEditing(false);
   };
 
+  if (!isEditing) {
+    return (
+      <div className="w-full h-full flex flex-col items-center justify-center min-h-[70vh] pb-10">
+        <div className="relative mt-24 pt-28 pb-8 px-8 sm:px-12 bg-white dark:bg-[#11241c] rounded-[2rem] shadow-xl w-full max-w-lg border border-gray-100 dark:border-gray-800">
+          
+          <div className="absolute -top-24 left-1/2 -translate-x-1/2">
+            <div className="w-48 h-48 rounded-full border-[8px] border-gray-50 dark:border-[#0a1510] shadow-[0_4px_20px_rgba(0,0,0,0.15)] overflow-hidden bg-white dark:bg-gray-800 flex items-center justify-center text-gray-500 font-kalpurush relative z-10 transition-transform">
+              {settings.madrasaLogo ? (
+                <img src={settings.madrasaLogo} alt="Logo" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-3xl font-bold">লোগো</span>
+              )}
+            </div>
+          </div>
+
+          <div className="absolute top-6 right-6">
+            <button 
+              onClick={() => setIsEditing(true)} 
+              className="flex flex-col items-center justify-center w-10 h-10 rounded-full bg-gray-50 dark:bg-gray-800 text-gray-600 hover:text-emerald-600 dark:text-gray-400 dark:hover:text-emerald-400 font-kalpurush transition-colors hover:shadow-md"
+            >
+              <Edit2 size={20} />
+            </button>
+          </div>
+
+          <div className="text-center font-kalpurush mt-4 space-y-3 text-gray-900 dark:text-gray-100">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4">{settings.madrasaName || 'মাদরাসার নাম'}</h2>
+            <p className="text-xl sm:text-2xl">{settings.address || 'ঠিকানা'}</p>
+            
+            <div className="pt-8 space-y-3 pb-8">
+              <p className="text-xl sm:text-2xl">ই-মেইল: {user?.email}</p>
+              <p className="text-xl sm:text-2xl">অ্যাডমিন: {settings.adminName || 'অ্যাডমিন'}</p>
+            </div>
+          </div>
+
+          <div className="mt-8 text-right font-kalpurush text-gray-600 dark:text-gray-400 text-xl font-medium border-t border-gray-100 dark:border-gray-800 pt-6">
+            মাদ্রাসা ম্যানেজমেন্ট
+          </div>
+        </div>
+
+        <button 
+          onClick={logout} 
+          className="mt-8 flex items-center gap-2 text-red-500 hover:text-red-700 bg-red-50 dark:bg-red-900/20 px-6 py-3 rounded-full font-kalpurush text-lg transition-colors border border-red-200 dark:border-red-800/50"
+        >
+          <LogOut size={20} />
+          লগআউট করুন
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full h-full flex flex-col items-center justify-start min-h-[60vh] space-y-8 pb-10">
+    <div className="w-full h-full flex flex-col items-center justify-start min-h-[60vh] space-y-8 pb-10 relative">
       <div className="text-center space-y-4 pt-4">
         <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200">একাউন্ট ও সেটিংস</h2>
         <p className="text-gray-500 dark:text-gray-400 font-kalpurush">আপনার মাদরাসার তথ্য পরিবর্তন করুন</p>
       </div>
 
-      <div className="bg-white dark:bg-[#11241c] p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 max-w-2xl w-full">
-        <div className="flex items-center gap-4 mb-8 pb-6 border-b border-gray-100 dark:border-gray-800">
-          <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center text-emerald-600 dark:text-emerald-400 text-2xl font-bold">
-            {user?.email?.charAt(0).toUpperCase() || 'U'}
-          </div>
-          <div>
-            <div className="text-lg font-medium text-gray-900 dark:text-white">
-              {user?.email}
-            </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400 font-kalpurush">
-              বর্তমান এডমিন
-            </div>
-          </div>
-          <div className="ml-auto">
-            <button 
-              onClick={logout}
-              className="px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/40 rounded-lg text-sm font-medium transition-colors border border-red-200 dark:border-red-800/50"
-            >
-              লগআউট করুন
-            </button>
-          </div>
-        </div>
+      <div className="bg-white dark:bg-[#11241c] p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 max-w-2xl w-full relative">
+        <button 
+          onClick={() => setIsEditing(false)} 
+          className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        >
+          <X size={24} />
+        </button>
 
-        <form onSubmit={handleSave} className="space-y-5 font-kalpurush">
+        <form onSubmit={handleSave} className="space-y-5 font-kalpurush mt-4">
           <div>
             <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">মাদরাসার নাম</label>
             <input 
@@ -63,15 +101,67 @@ export default function Account() {
           </div>
           
           <div>
-            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">মাদরাসার লোগো (ইউআরএল)</label>
-            <input 
-              type="text" 
-              name="madrasaLogo"
-              value={formData.madrasaLogo}
-              onChange={handleChange}
-              placeholder="https://example.com/logo.png"
-              className="w-full p-2 border border-emerald-200 dark:border-emerald-800/50 rounded-md focus:outline-none focus:border-emerald-500 bg-white dark:bg-gray-800 dark:text-white"
-            />
+            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">মাদরাসার লোগো</label>
+            <div 
+              className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-emerald-200 dark:border-emerald-800/50 border-dashed rounded-md relative hover:bg-gray-50 dark:hover:bg-gray-800/20 transition-colors"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                const file = e.dataTransfer.files[0];
+                if (file && file.type.startsWith('image/')) {
+                  if (file.size > 800 * 1024) {
+                    showAlert('লোগোর সাইজ ৮০০ কেবি এর নিচে হতে হবে!', 'warning');
+                    return;
+                  }
+                  const reader = new FileReader();
+                  reader.onload = (event) => {
+                    setFormData(prev => ({ ...prev, madrasaLogo: event.target?.result as string }));
+                  };
+                  reader.readAsDataURL(file);
+                }
+              }}
+            >
+              <div className="space-y-1 text-center">
+                {formData.madrasaLogo ? (
+                  <div className="relative">
+                    <img src={formData.madrasaLogo} alt="Logo preview" className="mx-auto h-24 w-auto object-contain mb-4 rounded-md" />
+                    <button type="button" onClick={() => setFormData(prev => ({ ...prev, madrasaLogo: '' }))} className="absolute -top-2 -right-2 bg-red-100 text-red-600 hover:bg-red-200 rounded-full p-1 text-xs px-2">রিমুভ</button>
+                  </div>
+                ) : (
+                  <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+                <div className="flex text-sm text-gray-600 dark:text-gray-400 justify-center">
+                  <label htmlFor="logo-upload" className="relative cursor-pointer bg-transparent rounded-md font-medium text-emerald-600 hover:text-emerald-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-emerald-500">
+                    <span>ফাইল আপলোড করুন</span>
+                    <input 
+                      id="logo-upload" 
+                      name="logo-upload" 
+                      type="file" 
+                      accept="image/*"
+                      className="sr-only" 
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          if (file.size > 800 * 1024) {
+                            showAlert('লোগোর সাইজ ৮০০ কেবি এর নিচে হতে হবে!', 'warning');
+                            return;
+                          }
+                          const reader = new FileReader();
+                          reader.onload = (event) => {
+                            setFormData(prev => ({ ...prev, madrasaLogo: event.target?.result as string }));
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                  </label>
+                  <p className="pl-1">বা টেনে এনে ছেড়ে দিন</p>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">PNG, JPG, GIF আপলোড করা যাবে</p>
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

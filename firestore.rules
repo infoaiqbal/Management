@@ -23,6 +23,10 @@ service cloud.firestore {
         && data.userId == request.auth.uid; // Identity Integrity
     }
 
+    match /settings/{userId} {
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
+    }
+
     match /students/{studentId} {
       // Allow read if user is the owner
       allow read: if isSignedIn() && existing().userId == request.auth.uid;
