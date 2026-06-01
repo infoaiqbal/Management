@@ -55,6 +55,16 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
 
   const [idType, setIdType] = useState<'birth_cert' | 'nid' | ''>('');
   const [parentType, setParentType] = useState<'father' | 'mother' | ''>('');
+  const [dobFocused, setDobFocused] = useState(false);
+
+  const formatDob = (dobText: string) => {
+    if (!dobText) return '';
+    const parts = dobText.split('-');
+    if (parts.length === 3) {
+      return toBng(`${parts[2]}/${parts[1]}/${parts[0]}`);
+    }
+    return toBng(dobText);
+  };
 
   // ফিস (Fees State)
   const buildInitialFee = (): FeeItem => ({ applicable: false, amount: 0, type: 'monthly' });
@@ -199,7 +209,16 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
             </div>
             <div>
               <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">জন্ম তারিখ</label>
-              <input type="date" name="dob" value={formData.dob} onChange={handleChange} className={inputClass} />
+              <input 
+                type={dobFocused ? "date" : "text"} 
+                name="dob" 
+                value={dobFocused ? formData.dob : formatDob(formData.dob)} 
+                onFocus={() => setDobFocused(true)} 
+                onBlur={() => setDobFocused(false)} 
+                onChange={handleChange} 
+                className={inputClass} 
+                placeholder={!dobFocused ? "দিন/মাস/বছর" : undefined}
+              />
             </div>
             <div>
               <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
@@ -431,16 +450,29 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
                   <div key={feeKey} className="flex flex-col md:flex-row md:items-center gap-4 bg-gray-50 dark:bg-gray-800/30 p-4 rounded-md">
                     <div className="w-full md:w-48 font-medium">{labels[feeKey]}:</div>
                     
-                    <div className="w-full md:w-48">
-                      <CustomSelect 
-                        value={feeState.applicable ? 'প্রযোজ্য' : 'প্রযোজ্য নয়'} 
-                        onChange={(val) => handleFeeChange(feeKey, 'applicable', val === 'প্রযোজ্য')}
-                        className={selectClass}
-                        options={[
-                          { value: 'প্রযোজ্য নয়', label: 'প্রযোজ্য নয়' },
-                          { value: 'প্রযোজ্য', label: 'প্রযোজ্য' }
-                        ]}
-                      />
+                    <div className="w-full md:w-auto min-w-[200px]">
+                      <div className="flex gap-4 items-center h-full">
+                        <label className="flex items-center gap-1 cursor-pointer">
+                          <input 
+                            type="radio" 
+                            name={`applicable_${feeKey}`} 
+                            checked={feeState.applicable} 
+                            onChange={() => handleFeeChange(feeKey, 'applicable', true)}
+                            className="accent-emerald-600"
+                          />
+                          প্রযোজ্য
+                        </label>
+                        <label className="flex items-center gap-1 cursor-pointer">
+                          <input 
+                            type="radio" 
+                            name={`applicable_${feeKey}`} 
+                            checked={!feeState.applicable} 
+                            onChange={() => handleFeeChange(feeKey, 'applicable', false)}
+                            className="accent-emerald-600"
+                          />
+                          প্রযোজ্য নয়
+                        </label>
+                      </div>
                     </div>
 
                     {feeState.applicable && (
@@ -455,17 +487,19 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
                             placeholder="টাকা"
                           />
                         </div>
-                        <div className="w-full md:w-auto">
-                          <CustomSelect 
-                            value={feeState.type} 
-                            onChange={(val) => handleFeeChange(feeKey, 'type', val)}
-                            className={selectClass}
-                            options={[
-                              { value: 'monthly', label: 'মাসিক' },
-                              { value: 'one-time', label: 'এককালিন' },
-                              { value: 'installment', label: 'তিন কিস্তি' }
-                            ]}
-                          />
+                        <div className="w-full md:w-auto flex flex-wrap gap-4 items-center min-h-[42px]">
+                          <label className="flex items-center gap-1 cursor-pointer">
+                            <input type="radio" name={`type_${feeKey}`} checked={feeState.type === 'monthly'} onChange={() => handleFeeChange(feeKey, 'type', 'monthly')} className="accent-emerald-600" />
+                            মাসিক
+                          </label>
+                          <label className="flex items-center gap-1 cursor-pointer">
+                            <input type="radio" name={`type_${feeKey}`} checked={feeState.type === 'one-time'} onChange={() => handleFeeChange(feeKey, 'type', 'one-time')} className="accent-emerald-600" />
+                            এককালিন
+                          </label>
+                          <label className="flex items-center gap-1 cursor-pointer">
+                            <input type="radio" name={`type_${feeKey}`} checked={feeState.type === 'installment'} onChange={() => handleFeeChange(feeKey, 'type', 'installment')} className="accent-emerald-600" />
+                            তিন কিস্তি
+                          </label>
                         </div>
                       </>
                     )}

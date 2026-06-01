@@ -134,7 +134,9 @@ export default function Home({ onEdit, onNavigate }: { onEdit?: (id: string) => 
           
           {/* 2 columns for Jamat count */}
           <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm border-t border-gray-100 dark:border-gray-800 pt-3">
-            {Object.entries(stats.studentsByJamat).map(([jamat, list]) => (
+            {Object.entries(stats.studentsByJamat).map(([jamat, listUnknown]) => {
+              const list = listUnknown as Student[];
+              return (
               <div 
                 key={jamat} 
                 className="flex justify-between items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 p-1 rounded transition-colors"
@@ -143,7 +145,7 @@ export default function Home({ onEdit, onNavigate }: { onEdit?: (id: string) => 
                 <span className="text-gray-600 dark:text-gray-400">{jamat}:</span>
                 <span className="font-semibold text-gray-800 dark:text-gray-200">{toBng(list.length)} জন</span>
               </div>
-            ))}
+            )})}
           </div>
         </div>
 
@@ -162,7 +164,9 @@ export default function Home({ onEdit, onNavigate }: { onEdit?: (id: string) => 
 
           <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm border-t border-gray-100 dark:border-gray-800 pt-3">
             {Object.entries(stats.admissionsByJamat).length > 0 ? (
-              Object.entries(stats.admissionsByJamat).map(([jamat, list]) => (
+              Object.entries(stats.admissionsByJamat).map(([jamat, listUnknown]) => {
+                const list = listUnknown as Student[];
+                return (
                 <div 
                   key={jamat} 
                   className="flex justify-between items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 p-1 rounded transition-colors"
@@ -171,7 +175,7 @@ export default function Home({ onEdit, onNavigate }: { onEdit?: (id: string) => 
                   <span className="text-gray-600 dark:text-gray-400">{jamat}:</span>
                   <span className="font-semibold text-gray-800 dark:text-gray-200">{toBng(list.length)} জন</span>
                 </div>
-              ))
+              )})
             ) : (
               <div className="col-span-2 text-gray-400 dark:text-gray-500 text-center py-2">চলতি মাসে কেউ ভর্তি হয়নি</div>
             )}
@@ -187,13 +191,15 @@ export default function Home({ onEdit, onNavigate }: { onEdit?: (id: string) => 
             </div>
           </div>
           <div className="mb-4">
-            <span className="text-3xl font-bold text-gray-800 dark:text-gray-100"><RollingNumber value={Object.keys(stats.pendingByFee).reduce((acc, k) => acc + stats.pendingByFee[k].length, 0)} /></span>
+            <span className="text-3xl font-bold text-gray-800 dark:text-gray-100"><RollingNumber value={Object.keys(stats.pendingByFee).reduce((acc, k) => acc + (stats.pendingByFee[k] as Student[]).length, 0)} /></span>
             <span className="text-gray-500 dark:text-gray-400 ml-2">টি বিষয়</span>
           </div>
 
           <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm border-t border-gray-100 dark:border-gray-800 pt-3">
             {Object.entries(stats.pendingByFee).length > 0 ? (
-              Object.entries(stats.pendingByFee).map(([feeKey, list]) => (
+              Object.entries(stats.pendingByFee).map(([feeKey, listUnknown]) => {
+                const list = listUnknown as Student[];
+                return (
                 <div 
                   key={feeKey} 
                   className="flex justify-between items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 p-1 rounded transition-colors"
@@ -202,7 +208,7 @@ export default function Home({ onEdit, onNavigate }: { onEdit?: (id: string) => 
                   <span className="text-gray-600 dark:text-gray-400">{FEEG_LABELS[feeKey] || feeKey}:</span>
                   <span className="font-semibold text-rose-500 dark:text-rose-400">{toBng(list.length)} জন</span>
                 </div>
-              ))
+              )})
             ) : (
               <div className="col-span-2 text-gray-400 dark:text-gray-500 text-center py-2">কোনো বকেয়া নেই</div>
             )}

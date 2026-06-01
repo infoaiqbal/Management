@@ -121,8 +121,9 @@ export const StudentProvider = ({ children }: { children: ReactNode }) => {
 
   const addStudent = async (student: Student) => {
     if (!user) return;
+    const studentData = { ...student, userId: user.uid };
+    setStudents(prev => [...prev, studentData]);
     try {
-      const studentData = { ...student, userId: user.uid };
       await setDoc(doc(db, 'students', student.id), studentData);
     } catch (err) {
       console.error("Error adding student", err);
@@ -132,8 +133,9 @@ export const StudentProvider = ({ children }: { children: ReactNode }) => {
 
   const updateStudent = async (updatedStudent: Student) => {
     if (!user) return;
+    const studentData = { ...updatedStudent, userId: user.uid };
+    setStudents(prev => prev.map(s => s.id === updatedStudent.id ? studentData : s));
     try {
-      const studentData = { ...updatedStudent, userId: user.uid };
       await setDoc(doc(db, 'students', updatedStudent.id), studentData);
     } catch (err) {
       console.error("Error updating student", err);
@@ -143,6 +145,7 @@ export const StudentProvider = ({ children }: { children: ReactNode }) => {
 
   const deleteStudent = async (id: string) => {
     if (!user) return;
+    setStudents(prev => prev.filter(s => s.id !== id));
     try {
       await deleteDoc(doc(db, 'students', id));
     } catch(err) {
