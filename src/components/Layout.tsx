@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, Moon, Sun, X, Home, UserPlus, Files, Wallet, List, Database, Search, User } from 'lucide-react';
+import { Menu, Moon, Sun, X, Home, UserPlus, Files, Wallet, List, Database, Search, User, Crown } from 'lucide-react';
 import { useStudents } from '../store/StudentContext';
 
 
@@ -31,6 +31,7 @@ export default function Layout({ children, activeMenuItem, setActiveMenuItem }: 
     { id: 'add_info', label: 'তথ্য সংযোগ', icon: <Database size={18} /> },
     { id: 'search_info', label: 'তথ্য খুঁজুন', icon: <Search size={18} /> },
     { id: 'account', label: 'একাউন্ট', icon: <User size={18} /> },
+    { id: 'developer', label: 'ডেভেলপার সম্পর্কে', icon: <Crown size={18} className="text-amber-500" /> },
   ];
 
   return (
