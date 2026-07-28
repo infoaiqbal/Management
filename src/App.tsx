@@ -44,9 +44,16 @@ function MainApp() {
     return <Auth onAuthSuccess={() => setActiveMenuItem('home')} />;
   }
 
+  const handleNavigation = (menu: string) => {
+    if (menu === 'admission' || menu === 'home') {
+      setEditingStudentId(null);
+    }
+    setActiveMenuItem(menu);
+  };
+
   return (
-    <Layout activeMenuItem={activeMenuItem} setActiveMenuItem={setActiveMenuItem}>
-      {activeMenuItem === 'home' && <Home onEdit={handleEdit} onNavigate={setActiveMenuItem} />}
+    <Layout activeMenuItem={activeMenuItem} setActiveMenuItem={handleNavigation}>
+      {activeMenuItem === 'home' && <Home onEdit={handleEdit} onNavigate={handleNavigation} />}
       {activeMenuItem === 'admission' && <AdmissionForm editId={editingStudentId} onSuccess={handleAdmissionSuccess} />}
       {activeMenuItem === 'forms' && <FormList onEdit={handleEdit} />}
       {activeMenuItem === 'fees' && <FeeCollection />}

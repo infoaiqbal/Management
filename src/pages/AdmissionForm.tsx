@@ -59,6 +59,16 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
   const [idType, setIdType] = useState<'birth_cert' | 'nid' | ''>('');
   const [parentType, setParentType] = useState<'father' | 'mother' | ''>('');
   const [dobFocused, setDobFocused] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
+  const totalSteps = 6;
+
+  const nextStep = () => {
+    if (currentStep < totalSteps) setCurrentStep(currentStep + 1);
+  };
+
+  const prevStep = () => {
+    if (currentStep > 1) setCurrentStep(currentStep - 1);
+  };
 
   const formatDob = (dobText: string) => {
     if (!dobText) return '';
@@ -196,11 +206,29 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
         <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 print:text-black text-center">
           {editId ? `${terms.singular_er} তথ্য সম্পাদনা` : `${terms.singular} ভর্তি ফরম`}
         </h2>
+        
+        {/* Progress Bar (Hidden in print) */}
+        <div className="mt-6 print:hidden">
+          <div className="flex justify-between items-center mb-2">
+            {[...Array(totalSteps)].map((_, idx) => (
+              <div 
+                key={idx} 
+                className={`flex-1 h-2 mx-1 rounded-full ${
+                  idx + 1 <= currentStep ? 'bg-emerald-500' : 'bg-gray-200 dark:bg-gray-700'
+                } transition-colors duration-300`}
+              />
+            ))}
+          </div>
+          <div className="text-center text-sm font-medium text-emerald-600 dark:text-emerald-400 mt-2">
+            ধাপ {toBng(currentStep)} / {toBng(totalSteps)}
+          </div>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-10">
         
         {/* ================= ব্যক্তিগত তথ্য (Personal Info) ================= */}
+        {currentStep === 1 && (
         <section>
           <h3 className="text-lg font-semibold text-emerald-700 dark:text-emerald-400 mb-4">ব্যক্তিগত তথ্য</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -309,8 +337,10 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
             </div>
           </div>
         </section>
+        )}
 
         {/* ================= পরিবার ও অভিবাবক (Family & Guardian) ================= */}
+        {currentStep === 2 && (
         <section>
           <h3 className="text-lg font-semibold text-emerald-700 dark:text-emerald-400 mb-4">পিতামাতার তথ্য</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -340,8 +370,10 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
             </div>
           </div>
         </section>
+        )}
 
         {/* ================= ঠিকানা (Address) ================= */}
+        {currentStep === 3 && (
         <section>
           <h3 className="text-lg font-semibold text-emerald-700 dark:text-emerald-400 mb-4">ঠিকানা</h3>
           
@@ -362,8 +394,11 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
             />
           </div>
         </section>
+        )}
 
         {/* ================= অভিভাবকের বিস্তারিত (Guardian Details) ================= */}
+        {currentStep === 4 && (
+        <>
         <section>
           <h3 className="text-lg font-semibold text-emerald-700 dark:text-emerald-400 mb-4">অভিভাবকের বিস্তারিত</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -408,8 +443,11 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
             </div>
           </div>
         </section>
+        </>
+        )}
 
         {/* ================= ভর্তি সংক্রান্ত (Admission Settings) ================= */}
+        {currentStep === 5 && (
         <section>
           <h3 className="text-lg font-semibold text-emerald-700 dark:text-emerald-400 mb-4">ভর্তির তথ্যাবলি</h3>
           
@@ -475,8 +513,10 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
             </div>
           </div>
         </section>
+        )}
 
         {/* ================= নির্ধারিত বেতন (Fees Definition) ================= */}
+        {currentStep === 6 && (
         <section>
           <h3 className="text-lg font-semibold text-emerald-700 dark:text-emerald-400 mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">নির্ধারিত বেতন</h3>
           <div className="space-y-6 mt-4">
@@ -549,19 +589,41 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
             }
           </div>
         </section>
+        )}
 
-        <div className="pt-6 flex gap-4 print:hidden">
-          {editId && (
-            <button type="button" onClick={() => onSuccess && onSuccess()} className="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-md transition-colors">
-              বাতিল করুন
-            </button>
-          )}
-          <button type="button" onClick={() => window.print()} className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-md transition-colors">
-            প্রিন্ট করুন
-          </button>
-          <button type="submit" className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-md transition-colors">
-            {editId ? 'আপডেট করুন' : 'ভর্তি সম্পন্ন করুন'}
-          </button>
+        {/* Step Navigation Controls */}
+        <div className="pt-6 flex justify-between gap-4 print:hidden border-t border-gray-200 dark:border-gray-800 mt-8">
+          <div>
+            {currentStep > 1 && (
+              <button type="button" onClick={prevStep} className="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold py-3 px-6 rounded-md transition-colors">
+                পূর্ববর্তী ধাপ
+              </button>
+            )}
+          </div>
+          
+          <div className="flex gap-4">
+            {editId && (
+              <button type="button" onClick={() => onSuccess && onSuccess()} className="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-md transition-colors">
+                বাতিল করুন
+              </button>
+            )}
+            
+            {currentStep === totalSteps && (
+              <button type="button" onClick={() => window.print()} className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-md transition-colors">
+                প্রিন্ট করুন
+              </button>
+            )}
+            
+            {currentStep < totalSteps ? (
+              <button type="button" onClick={nextStep} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-md transition-colors">
+                পরবর্তী ধাপ
+              </button>
+            ) : (
+              <button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-md transition-colors">
+                {editId ? 'আপডেট করুন' : 'ভর্তি সম্পন্ন করুন'}
+              </button>
+            )}
+          </div>
         </div>
       </form>
     </div>

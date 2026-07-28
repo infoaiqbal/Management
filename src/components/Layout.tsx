@@ -24,7 +24,6 @@ export default function Layout({ children, activeMenuItem, setActiveMenuItem }: 
   // সাইডবারের মেনু সমূহ
   const menuItems = [
     { id: 'home', label: 'হোম', icon: <Home size={18} /> },
-    { id: 'admission', label: 'ভর্তি ফরম', icon: <UserPlus size={18} /> },
     { id: 'forms', label: 'ফরম সমূহ', icon: <Files size={18} /> },
     { id: 'fees', label: 'বেতন গ্রহণ', icon: <Wallet size={18} /> },
     { id: 'reports', label: 'তালিকা তৈরি', icon: <List size={18} /> },

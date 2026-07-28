@@ -218,6 +218,18 @@ export default function Home({ onEdit, onNavigate }: { onEdit?: (id: string) => 
         </div>
       </div>
 
+      {/* Floating Action Button for Admission */}
+      <button 
+        onClick={() => onNavigate && onNavigate('admission')}
+        className="fixed bottom-8 right-8 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full p-4 shadow-lg shadow-emerald-600/30 transition-all hover:scale-105 active:scale-95 z-40 group flex items-center justify-center print:hidden"
+        title="নতুন ভর্তি"
+      >
+        <UserPlus className="w-6 h-6" />
+        <span className="max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-[100px] transition-all duration-300 ease-in-out font-kalpurush font-medium text-base pl-0 group-hover:pl-2">
+          নতুন ভর্তি
+        </span>
+      </button>
+
       {/* Modal for Student List */}
       <AnimatePresence>
         {modalData && (
