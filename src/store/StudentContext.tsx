@@ -18,6 +18,9 @@ interface StudentContextType {
   showAlert: (message: string, type?: 'success' | 'warning' | 'error' | 'info') => void;
   showConfirm: (message: string, onConfirm: () => void, onCancel?: () => void) => void;
   user: User | null;
+  isGuest: boolean;
+  setGuestMode: (value: boolean) => void;
+  syncStatus: 'synced' | 'syncing' | 'offline';
   logout: () => void;
 }
 
@@ -49,6 +52,8 @@ export const StudentProvider = ({ children }: { children: ReactNode }) => {
   const [settings, setSettings] = useState<MadrasaSettings>(defaultSettings);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
+  const [isGuest, setIsGuest] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<'synced' | 'syncing' | 'offline'>('synced');
   
   // Theme state
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
@@ -89,61 +94,83 @@ export const StudentProvider = ({ children }: { children: ReactNode }) => {
       }
     });
 
-    return () => unsubscribeAuth();
+    const handleOnline = () => setSyncStatus('synced');
+    const handleOffline = () => setSyncStatus('offline');
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    setSyncStatus(navigator.onLine ? 'synced' : 'offline');
+
+    return () => {
+      unsubscribeAuth();
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
 
   useEffect(() => {
-    if (!user) return;
-    
-    setLoading(true);
-    
-    // Listen to settings
-    const settingsUnsub = onSnapshot(doc(db, 'settings', user.uid), (docSnap) => {
-      if (docSnap.exists()) {
-        setSettings({ ...defaultSettings, ...(docSnap.data() as MadrasaSettings) });
-      } else {
-        setSettings(defaultSettings);
-      }
-    });
-
-    const q = query(collection(db, 'students'), where('userId', '==', user.uid));
-    
-    const unsubscribeData = onSnapshot(q, (snapshot) => {
-      const data: Student[] = [];
-      snapshot.forEach(doc => {
-        data.push(doc.data() as Student);
-      });
-      setStudents(data);
-      // Cache for offline support (optional, firestore has its own cache but just in case)
-      localforage.setItem(`madrasa_students_${user.uid}`, data).catch(console.error);
-      setLoading(false);
-    }, (error) => {
-      console.error("Firestore Error:", error);
+    if (user) {
+      setLoading(true);
       
-      // Fallback to localforage
-      localforage.getItem<Student[]>(`madrasa_students_${user.uid}`).then((data) => {
-        if (data) setStudents(data);
+      const settingsUnsub = onSnapshot(doc(db, 'settings', user.uid), (docSnap) => {
+        if (docSnap.exists()) {
+          setSettings({ ...defaultSettings, ...(docSnap.data() as MadrasaSettings) });
+        } else {
+          setSettings(defaultSettings);
+        }
+      });
+
+      const q = query(collection(db, 'students'), where('userId', '==', user.uid));
+      
+      const unsubscribeData = onSnapshot(q, (snapshot) => {
+        const data: Student[] = [];
+        snapshot.forEach(doc => {
+          data.push(doc.data() as Student);
+        });
+        setStudents(data);
+        localforage.setItem(`madrasa_students_${user.uid}`, data).catch(console.error);
+        setLoading(false);
+      }, (error) => {
+        console.error("Firestore Error:", error);
+        localforage.getItem<Student[]>(`madrasa_students_${user.uid}`).then((data) => {
+          if (data) setStudents(data);
+          setLoading(false);
+        });
+      });
+
+      return () => {
+        unsubscribeData();
+        settingsUnsub();
+      };
+    } else if (isGuest) {
+      setLoading(true);
+      // Load from localforage for guest
+      Promise.all([
+        localforage.getItem<MadrasaSettings>('guest_settings'),
+        localforage.getItem<Student[]>('guest_students')
+      ]).then(([savedSettings, savedStudents]) => {
+        if (savedSettings) setSettings({ ...defaultSettings, ...savedSettings });
+        if (savedStudents) setStudents(savedStudents);
         setLoading(false);
       });
-    });
-
-    return () => {
-      unsubscribeData();
-      settingsUnsub();
-    };
-  }, [user]);
+    }
+  }, [user, isGuest]);
 
   const updateSettings = async (newSettings: MadrasaSettings) => {
-    if (!user) return;
-    try {
-      await setDoc(doc(db, 'settings', user.uid), newSettings);
+    if (user) {
+      try {
+        await setDoc(doc(db, 'settings', user.uid), newSettings);
+        setSettings(newSettings);
+        showAlert('সেটিংস সেভ হয়েছে!', 'success');
+      } catch(err) {
+        console.error(err);
+        showAlert('সেটিংস সেভ করতে সমস্যা হয়েছে!', 'error');
+      }
+    } else if (isGuest) {
       setSettings(newSettings);
-      showAlert('সেটিংস সেভ হয়েছে!', 'success');
-    } catch(err) {
-      console.error(err);
-      showAlert('সেটিংস সেভ করতে সমস্যা হয়েছে!', 'error');
+      await localforage.setItem('guest_settings', newSettings);
+      showAlert('সেটিংস অফলাইনে সেভ হয়েছে!', 'success');
     }
-  }
+  };
 
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
@@ -157,37 +184,52 @@ export const StudentProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const addStudent = async (student: Student) => {
-    if (!user) return;
-    const studentData = { ...student, userId: user.uid };
-    setStudents(prev => [...prev, studentData]);
-    try {
-      await setDoc(doc(db, 'students', student.id), studentData);
-    } catch (err) {
-      console.error("Error adding student", err);
-      showAlert('তথ্য সংরক্ষণ করতে সমস্যা হয়েছে!', 'error');
+    if (user) {
+      const studentData = { ...student, userId: user.uid };
+      setStudents(prev => [...prev, studentData]);
+      try {
+        await setDoc(doc(db, 'students', student.id), studentData);
+      } catch (err) {
+        console.error("Error adding student", err);
+        showAlert('তথ্য সংরক্ষণ করতে সমস্যা হয়েছে!', 'error');
+      }
+    } else if (isGuest) {
+      const newStudents = [...students, student];
+      setStudents(newStudents);
+      await localforage.setItem('guest_students', newStudents);
     }
   };
 
   const updateStudent = async (updatedStudent: Student) => {
-    if (!user) return;
-    const studentData = { ...updatedStudent, userId: user.uid };
-    setStudents(prev => prev.map(s => s.id === updatedStudent.id ? studentData : s));
-    try {
-      await setDoc(doc(db, 'students', updatedStudent.id), studentData);
-    } catch (err) {
-      console.error("Error updating student", err);
-      showAlert('তথ্য আপডেট করতে সমস্যা হয়েছে!', 'error');
+    if (user) {
+      const studentData = { ...updatedStudent, userId: user.uid };
+      setStudents(prev => prev.map(s => s.id === updatedStudent.id ? studentData : s));
+      try {
+        await setDoc(doc(db, 'students', updatedStudent.id), studentData);
+      } catch (err) {
+        console.error("Error updating student", err);
+        showAlert('তথ্য আপডেট করতে সমস্যা হয়েছে!', 'error');
+      }
+    } else if (isGuest) {
+      const newStudents = students.map(s => s.id === updatedStudent.id ? updatedStudent : s);
+      setStudents(newStudents);
+      await localforage.setItem('guest_students', newStudents);
     }
   };
 
   const deleteStudent = async (id: string) => {
-    if (!user) return;
-    setStudents(prev => prev.filter(s => s.id !== id));
-    try {
-      await deleteDoc(doc(db, 'students', id));
-    } catch(err) {
-      console.error("Error deleting student", err);
-      showAlert('তথ্য মুছতে সমস্যা হয়েছে!', 'error');
+    if (user) {
+      setStudents(prev => prev.filter(s => s.id !== id));
+      try {
+        await deleteDoc(doc(db, 'students', id));
+      } catch(err) {
+        console.error("Error deleting student", err);
+        showAlert('তথ্য মুছতে সমস্যা হয়েছে!', 'error');
+      }
+    } else if (isGuest) {
+      const newStudents = students.filter(s => s.id !== id);
+      setStudents(newStudents);
+      await localforage.setItem('guest_students', newStudents);
     }
   };
 
@@ -197,7 +239,7 @@ export const StudentProvider = ({ children }: { children: ReactNode }) => {
 
 
   return (
-    <StudentContext.Provider value={{ students, settings, updateSettings, addStudent, updateStudent, deleteStudent, loading, theme, toggleTheme, showAlert, showConfirm, user, logout }}>
+    <StudentContext.Provider value={{ students, settings, updateSettings, addStudent, updateStudent, deleteStudent, loading, theme, toggleTheme, showAlert, showConfirm, user, isGuest, setGuestMode: setIsGuest, syncStatus, logout }}>
       {children}
       
       {/* Custom Alert Modal */}

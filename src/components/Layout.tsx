@@ -19,7 +19,7 @@ interface LayoutProps {
 
 export default function Layout({ children, activeMenuItem, setActiveMenuItem }: LayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const { theme, toggleTheme, settings } = useStudents();
+  const { theme, toggleTheme, settings, syncStatus, isGuest } = useStudents();
 
   // সাইডবারের মেনু সমূহ
   const menuItems = [
@@ -108,7 +108,13 @@ export default function Layout({ children, activeMenuItem, setActiveMenuItem }: 
           <div className="font-semibold text-lg lg:hidden">মাদরাসা ডাটাবেস</div>
           
           {/* থিম টগল বাটন (Theme Toggle) */}
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-3">
+            <div className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+              <span className={`w-2 h-2 rounded-full ${syncStatus === 'synced' && !isGuest ? 'bg-emerald-500' : 'bg-gray-400'} ${syncStatus === 'syncing' ? 'animate-pulse bg-blue-500' : ''}`}></span>
+              <span className="text-gray-600 dark:text-gray-300">
+                {isGuest ? 'অফলাইন মুড' : (syncStatus === 'synced' ? 'সিঙ্কড' : (syncStatus === 'syncing' ? 'সিঙ্ক হচ্ছে...' : 'অফলাইন'))}
+              </span>
+            </div>
             <button 
               onClick={toggleTheme}
               className="p-2 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition"

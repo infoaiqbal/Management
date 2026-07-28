@@ -18,7 +18,7 @@ import DeveloperProfile from './pages/DeveloperProfile';
 import Auth from './components/Auth';
 
 function MainApp() {
-  const { user, loading } = useStudents();
+  const { user, loading, isGuest, setGuestMode } = useStudents();
   const [activeMenuItem, setActiveMenuItem] = useState('home');
   const [editingStudentId, setEditingStudentId] = useState<string | null>(null);
 
@@ -67,11 +67,11 @@ function MainApp() {
     );
   }
 
-  if (!user) {
+  if (!user && !isGuest) {
     return <Auth onAuthSuccess={() => {
       setActiveMenuItem('home');
       window.history.replaceState({ menu: 'home' }, '', '?menu=home');
-    }} />;
+    }} onSkip={() => setGuestMode(true)} />;
   }
 
   const handleNavigation = (menu: string) => {

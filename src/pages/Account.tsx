@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useStudents } from '../store/StudentContext';
-import { Edit2, X, LogOut } from 'lucide-react';
+import { Edit2, X, LogOut, User } from 'lucide-react';
 
 export default function Account() {
-  const { user, logout, settings, updateSettings, showAlert } = useStudents();
+  const { user, logout, settings, updateSettings, showAlert, isGuest, setGuestMode } = useStudents();
   
   const [formData, setFormData] = useState(settings);
   const [isEditing, setIsEditing] = useState(false);
@@ -22,6 +22,28 @@ export default function Account() {
     await updateSettings(formData);
     setIsEditing(false);
   };
+
+  if (!user && isGuest) {
+    return (
+      <div className="w-full h-full flex flex-col items-center justify-center min-h-[70vh] pb-10">
+        <div className="bg-white dark:bg-[#11241c] rounded-2xl shadow-lg p-8 max-w-md text-center border border-gray-100 dark:border-gray-800">
+          <div className="w-16 h-16 mx-auto bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-6">
+            <User className="text-gray-400 dark:text-gray-500" size={32} />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-4 font-kalpurush">অফলাইন মুড চলছে</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-8 font-kalpurush">
+            একাউন্ট তৈরি করে বা লগইন করে আপনার ডাটা অনলাইনে সংরক্ষণ ও সিঙ্ক করুন।
+          </p>
+          <button 
+            onClick={() => setGuestMode(false)}
+            className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium shadow-md font-kalpurush"
+          >
+            লগইন বা একাউন্ট তৈরি করুন
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (!isEditing) {
     return (

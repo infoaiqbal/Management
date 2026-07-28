@@ -4,7 +4,7 @@ import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswor
 import { Lock, Mail, Eye, EyeOff } from 'lucide-react';
 import './Auth.css';
 
-export default function Auth({ onAuthSuccess }: { onAuthSuccess: () => void }) {
+export default function Auth({ onAuthSuccess, onSkip }: { onAuthSuccess: () => void, onSkip: () => void }) {
   const [isActive, setIsActive] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   
@@ -144,6 +144,14 @@ export default function Auth({ onAuthSuccess }: { onAuthSuccess: () => void }) {
                 <button type="submit" className="auth-btn" disabled={loading}>
                   {loading ? 'অপেক্ষা করুন...' : (isForgotPassword ? 'লینک পাঠান' : 'লগইন')}
                 </button>
+
+                {!isForgotPassword && (
+                  <div className="mt-4 text-center">
+                    <button type="button" onClick={onSkip} className="text-emerald-700 dark:text-emerald-400 font-medium hover:underline bg-transparent border-none cursor-pointer">
+                      লগইন ছাড়াই চালিয়ে যান (অফলাইন মুড)
+                    </button>
+                  </div>
+                )}
 
                 {isForgotPassword && (
                   <div className="forgot-link" style={{marginTop: '15px'}}>
