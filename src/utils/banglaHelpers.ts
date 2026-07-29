@@ -20,3 +20,39 @@ export const bngMonths = [
 ];
 
 export const bngInstallments = ['প্রথম', 'দ্বিতীয়', 'তৃতীয়'];
+
+const onesBng = ['', 'এক', 'দুই', 'তিন', 'চার', 'পাঁচ', 'ছয়', 'সাত', 'আট', 'নয়', 'দশ', 'এগারো', 'বারো', 'তেরো', 'চোদ্দ', 'পনেরো', 'ষোলো', 'সতেরো', 'আঠারো', 'উনিশ'];
+const tensBng = ['', '', 'বিশ', 'ত্রিশ', 'চল্লিশ', 'পঞ্চাশ', 'ষাট', 'সত্তর', 'আশি', 'নব্বই'];
+
+export const numberToBanglaWords = (num: number): string => {
+  if (num === 0) return 'শূন্য';
+  let str = '';
+  
+  if (num >= 10000000) {
+    str += numberToBanglaWords(Math.floor(num / 10000000)) + ' কোটি ';
+    num %= 10000000;
+  }
+  if (num >= 100000) {
+    str += numberToBanglaWords(Math.floor(num / 100000)) + ' লক্ষ ';
+    num %= 100000;
+  }
+  if (num >= 1000) {
+    str += numberToBanglaWords(Math.floor(num / 1000)) + ' হাজার ';
+    num %= 1000;
+  }
+  if (num >= 100) {
+    str += numberToBanglaWords(Math.floor(num / 100)) + ' শত ';
+    num %= 100;
+  }
+  if (num > 0) {
+    if (num < 20) {
+      str += onesBng[num] + ' ';
+    } else {
+      str += tensBng[Math.floor(num / 10)] + ' ';
+      if (num % 10 > 0) {
+        str += onesBng[num % 10] + ' ';
+      }
+    }
+  }
+  return str.trim();
+};

@@ -6,6 +6,7 @@ import { Student, Address, Fees, FeeItem } from '../types';
 import AddressFields from '../components/AddressFields';
 import CustomSelect from '../components/CustomSelect';
 import { BookOpen } from 'lucide-react';
+import { PrintReceipt, ReceiptItem } from '../components/PrintReceipt';
 
 /**
  * ==========================================
@@ -18,6 +19,8 @@ import { BookOpen } from 'lucide-react';
 export default function AdmissionForm({ editId, onSuccess }: { editId?: string | null; onSuccess?: () => void }) {
   const { students, settings, addStudent, updateStudent, showAlert } = useStudents();
   
+  const [printMode, setPrintMode] = useState<'form' | 'receipt'>('form');
+
   // স্বয়ংক্রিয় দাখেলা নাম্বার জেনারেট (Auto generate Daquela Number)
   const generateDaquela = () => {
     const nextId = students.length > 0 ? Math.max(...students.map(s => parseInt(toEng(s.id)))) + 1 : 1;
@@ -201,7 +204,8 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
   const terms = getStudentTerms(currentGender);
 
   return (
-    <div className="max-w-4xl mx-auto bg-white dark:bg-[#0f2119] print:dark:bg-white print:text-black print:p-0 print:shadow-none p-6 lg:p-8 rounded-lg shadow-sm">
+    <div className="relative">
+    <div className={`max-w-4xl mx-auto bg-white dark:bg-[#0f2119] print:dark:bg-white print:text-black print:p-0 print:shadow-none p-6 lg:p-8 rounded-lg shadow-sm ${printMode === 'receipt' ? 'print:hidden' : ''}`}>
       <div className="mb-8 border-b-2 border-emerald-500 pb-4">
         <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 print:text-black text-center">
           {editId ? `${terms.singular_er} তথ্য সম্পাদনা` : `${terms.singular} ভর্তি ফরম`}
@@ -609,9 +613,14 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
             )}
             
             {currentStep === totalSteps && (
-              <button type="button" onClick={() => window.print()} className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-md transition-colors">
-                প্রিন্ট করুন
-              </button>
+              <>
+                <button type="button" onClick={() => { setPrintMode('form'); setTimeout(() => window.print(), 100); }} className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded-md transition-colors text-sm md:text-base">
+                  ফরম প্রিন্ট
+                </button>
+                <button type="button" onClick={() => { setPrintMode('receipt'); setTimeout(() => window.print(), 100); }} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-md transition-colors text-sm md:text-base">
+                  রশিদ প্রিন্ট
+                </button>
+              </>
             )}
             
             {currentStep < totalSteps ? (
@@ -626,6 +635,36 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
           </div>
         </div>
       </form>
+      
+      {/* Print Receipt Section (Only active when printMode === 'receipt') */}
+      {printMode === 'receipt' && (() => {
+        const catLabels: any = { food: 'খোরাকি', electricity: 'বিদ্যুৎ বিল', tuition: 'বেতন', development: 'উন্নয়ন ফি', library: 'পাঠাগার ফি' };
+        const items: ReceiptItem[] = [];
+        let sl = 1;
+        (Object.keys(formData.fees) as Array<keyof Fees>).forEach(key => {
+          if (formData.fees[key].applicable) {
+            items.push({
+              sl: sl++,
+              description: catLabels[key] + (formData.fees[key].type === 'installment' ? ' (ভর্তির সময়)' : ''),
+              month: '-',
+              amount: formData.fees[key].amount
+            });
+          }
+        });
+        
+        return (
+          <div className="hidden print:block absolute top-0 left-0 bg-white w-full h-full z-50">
+            <PrintReceipt 
+              title="ভর্তির রশিদ"
+              student={formData as Student}
+              items={items}
+              settings={settings}
+              date={new Date().toISOString()}
+            />
+          </div>
+        );
+      })()}
+    </div>
     </div>
   );
 }

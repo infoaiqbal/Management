@@ -13,6 +13,7 @@ export interface MadrasaSettings {
   adminName: string;
   address: string;
   studentGender: 'boys' | 'girls' | 'both';
+  signature?: string;
 }
 
 export type FeeType = 'monthly' | 'one-time' | 'installment';

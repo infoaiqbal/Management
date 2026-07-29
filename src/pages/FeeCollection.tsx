@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useStudents } from '../store/StudentContext';
 import { getStudentTerms } from '../utils/studentTerms';
 import { toBng, toEng, bngMonths, bngInstallments } from '../utils/banglaHelpers';
 import { FeeItem, Fees } from '../types';
 import CustomSelect from '../components/CustomSelect';
+import { PrintReceipt, ReceiptItem } from '../components/PrintReceipt';
 
 /**
  * ==========================================
@@ -133,21 +134,22 @@ export default function FeeCollection() {
       </div>
 
       {activeStudent && (
-        <div className="bg-white dark:bg-[#0f2119] p-6 lg:p-8 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 space-y-6 transition-all">
+        <>
+        <div className="bg-white dark:bg-[#0f2119] p-6 lg:p-8 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 space-y-6 transition-all print:hidden">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-emerald-50/50 dark:bg-emerald-900/10 p-5 rounded-lg border border-emerald-100 dark:border-emerald-900/20">
             <div>
               <div className="text-sm text-gray-500 dark:text-gray-400">নাম</div>
-              <div className="font-semibold text-lg text-gray-800 dark:text-gray-200 print:text-black">{activeStudent.name}</div>
+              <div className="font-semibold text-lg text-gray-800 dark:text-gray-200">{activeStudent.name}</div>
             </div>
             <div>
               <div className="text-sm text-gray-500 dark:text-gray-400">জামাত</div>
-              <div className="font-semibold text-lg text-gray-800 dark:text-gray-200 print:text-black">{activeStudent.admissionClass || 'উল্লেখ নেই'}</div>
+              <div className="font-semibold text-lg text-gray-800 dark:text-gray-200">{activeStudent.admissionClass || 'উল্লেখ নেই'}</div>
             </div>
             <div>
               <div className="text-sm text-gray-500 dark:text-gray-400">বিভাগ</div>
-              <div className="font-semibold text-lg text-gray-800 dark:text-gray-200 print:text-black">{activeStudent.admissionSection}</div>
+              <div className="font-semibold text-lg text-gray-800 dark:text-gray-200">{activeStudent.admissionSection}</div>
             </div>
-            <div className="flex justify-end items-start print:hidden">
+            <div className="flex justify-end items-start">
               <button onClick={() => window.print()} className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-md transition-colors flex items-center gap-2 shadow shadow-gray-500/20">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
                 প্রিন্ট রসিদ
@@ -167,6 +169,27 @@ export default function FeeCollection() {
             </div>
           </div>
         </div>
+
+        {/* Print Receipt Section */}
+        {(() => {
+          const catLabels: any = { food: 'খোরাকি', electricity: 'বিদ্যুৎ বিল', tuition: 'বেতন', development: 'উন্নয়ন ফি', library: 'পাঠাগার ফি' };
+          const items: ReceiptItem[] = (activeStudent.payments || []).map((p: any, idx: number) => ({
+            sl: idx + 1,
+            description: catLabels[p.feeCategory] + (p.installment ? ` (${p.installment} কিস্তি)` : ''),
+            month: p.month || '-',
+            amount: p.amount
+          }));
+          return (
+            <PrintReceipt 
+              title="বেতন রশিদ"
+              student={activeStudent}
+              items={items}
+              settings={settings}
+              date={new Date().toISOString()}
+            />
+          );
+        })()}
+        </>
       )}
     </div>
   );

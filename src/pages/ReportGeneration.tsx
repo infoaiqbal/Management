@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useStudents } from '../store/StudentContext';
 import { getStudentTerms } from '../utils/studentTerms';
 import { toBng } from '../utils/banglaHelpers';
+import { PrintHeader } from '../components/PrintHeader';
 import { Printer } from 'lucide-react';
 import CustomSelect from '../components/CustomSelect';
 
@@ -80,18 +81,30 @@ export default function ReportGeneration() {
         </div>
       </div>
 
-      {/* 
+        {/* 
         =================
         প্রিন্ট এরিয়া (Print View Area)
         =================
       */}
       <div className="bg-white p-8 rounded-lg shadow-sm print:shadow-none print:p-0 dark:bg-[#0f2119] print:dark:bg-white print:text-black">
-        <div className="text-center mb-8">
+        <PrintHeader 
+          settings={settings} 
+          title={
+            (reportType === 'studentList' ? `${terms.singular} তালিকা` :
+             reportType === 'hafizList' ? `হিফজ সম্পন্ন ${terms.plural_der} তালিকা` :
+             reportType === 'bloodGroup' ? 'রক্তের গ্রুপ অনুযায়ী তালিকা' :
+             reportType === 'mobileList' ? 'অভিভাবকের যোগাযোগ তালিকা' : '') +
+            (filterClass ? ` (জামাত: ${filterClass})` : '')
+          }
+        />
+        
+        {/* On-screen heading (hidden in print) */}
+        <div className="text-center mb-8 print:hidden">
           {settings.madrasaLogo && (
             <img src={settings.madrasaLogo} alt={settings.madrasaName} className="h-16 mx-auto mb-2 object-contain" />
           )}
-          <h1 className="text-2xl font-bold dark:text-gray-100 print:text-black mb-2">{settings.madrasaName || 'মাদরাসা বায়তুল উলুম'}</h1>
-          <h2 className="text-lg font-semibold border-b-2 border-gray-300 inline-block pb-1 dark:text-gray-200 print:text-gray-800">
+          <h1 className="text-2xl font-bold dark:text-gray-100 mb-2">{settings.madrasaName || 'মাদরাসা বায়তুল উলুম'}</h1>
+          <h2 className="text-lg font-semibold border-b-2 border-gray-300 inline-block pb-1 dark:text-gray-200">
             {reportType === 'studentList' && `${terms.singular} তালিকা`}
             {reportType === 'hafizList' && `হিফজ সম্পন্ন ${terms.plural_der} তালিকা`}
             {reportType === 'bloodGroup' && 'রক্তের গ্রুপ অনুযায়ী তালিকা'}

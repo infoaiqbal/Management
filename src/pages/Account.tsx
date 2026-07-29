@@ -186,6 +186,70 @@ export default function Account() {
             </div>
           </div>
 
+          <div>
+            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">আদায়কারীর স্বাক্ষর (রশিদে প্রিন্ট হবে)</label>
+            <div 
+              className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-emerald-200 dark:border-emerald-800/50 border-dashed rounded-md relative hover:bg-gray-50 dark:hover:bg-gray-800/20 transition-colors"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                const file = e.dataTransfer.files[0];
+                if (file && file.type.startsWith('image/')) {
+                  if (file.size > 800 * 1024) {
+                    showAlert('স্বাক্ষরের সাইজ ৮০০ কেবি এর নিচে হতে হবে!', 'warning');
+                    return;
+                  }
+                  const reader = new FileReader();
+                  reader.onload = (event) => {
+                    setFormData(prev => ({ ...prev, signature: event.target?.result as string }));
+                  };
+                  reader.readAsDataURL(file);
+                }
+              }}
+            >
+              <div className="space-y-1 text-center">
+                {formData.signature ? (
+                  <div className="relative">
+                    <img src={formData.signature} alt="Signature preview" className="mx-auto h-16 w-auto object-contain mb-4 rounded-md" />
+                    <button type="button" onClick={() => setFormData(prev => ({ ...prev, signature: '' }))} className="absolute -top-2 -right-2 bg-red-100 text-red-600 hover:bg-red-200 rounded-full p-1 text-xs px-2">রিমুভ</button>
+                  </div>
+                ) : (
+                  <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                    <path d="M12.5 35.5L35.5 12.5M12.5 12.5l23 23" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+                <div className="flex text-sm text-gray-600 dark:text-gray-400 justify-center">
+                  <label htmlFor="signature-upload" className="relative cursor-pointer bg-transparent rounded-md font-medium text-emerald-600 hover:text-emerald-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-emerald-500">
+                    <span>ফাইল আপলোড করুন</span>
+                    <input 
+                      id="signature-upload" 
+                      name="signature-upload" 
+                      type="file" 
+                      accept="image/*"
+                      className="sr-only" 
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          if (file.size > 800 * 1024) {
+                            showAlert('স্বাক্ষরের সাইজ ৮০০ কেবি এর নিচে হতে হবে!', 'warning');
+                            return;
+                          }
+                          const reader = new FileReader();
+                          reader.onload = (event) => {
+                            setFormData(prev => ({ ...prev, signature: event.target?.result as string }));
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                  </label>
+                  <p className="pl-1">বা টেনে এনে ছেড়ে দিন</p>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">পিছনের ব্যাকগ্রাউন্ড ছাড়া (PNG) আপলোড করা ভালো</p>
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">এডমিনের নাম</label>

@@ -44,7 +44,8 @@ const defaultSettings: MadrasaSettings = {
   madrasaLogo: '',
   adminName: 'এডমিন',
   address: 'ঢাকা, বাংলাদেশ',
-  studentGender: 'boys'
+  studentGender: 'boys',
+  signature: ''
 };
 
 export const StudentProvider = ({ children }: { children: ReactNode }) => {
@@ -158,7 +159,8 @@ export const StudentProvider = ({ children }: { children: ReactNode }) => {
   const updateSettings = async (newSettings: MadrasaSettings) => {
     if (user) {
       try {
-        await setDoc(doc(db, 'settings', user.uid), newSettings);
+        const sanitizedSettings = JSON.parse(JSON.stringify(newSettings));
+        await setDoc(doc(db, 'settings', user.uid), sanitizedSettings);
         setSettings(newSettings);
         showAlert('সেটিংস সেভ হয়েছে!', 'success');
       } catch(err) {
@@ -188,7 +190,8 @@ export const StudentProvider = ({ children }: { children: ReactNode }) => {
       const studentData = { ...student, userId: user.uid };
       setStudents(prev => [...prev, studentData]);
       try {
-        await setDoc(doc(db, 'students', student.id), studentData);
+        const sanitizedData = JSON.parse(JSON.stringify(studentData));
+        await setDoc(doc(db, 'students', student.id), sanitizedData);
       } catch (err) {
         console.error("Error adding student", err);
         showAlert('তথ্য সংরক্ষণ করতে সমস্যা হয়েছে!', 'error');
@@ -205,7 +208,8 @@ export const StudentProvider = ({ children }: { children: ReactNode }) => {
       const studentData = { ...updatedStudent, userId: user.uid };
       setStudents(prev => prev.map(s => s.id === updatedStudent.id ? studentData : s));
       try {
-        await setDoc(doc(db, 'students', updatedStudent.id), studentData);
+        const sanitizedData = JSON.parse(JSON.stringify(studentData));
+        await setDoc(doc(db, 'students', updatedStudent.id), sanitizedData);
       } catch (err) {
         console.error("Error updating student", err);
         showAlert('তথ্য আপডেট করতে সমস্যা হয়েছে!', 'error');
