@@ -161,6 +161,7 @@ export default function FeeCollection() {
             <h3 className="font-semibold text-lg text-emerald-700 dark:text-emerald-400 border-b border-emerald-100 dark:border-gray-700 pb-2">নির্ধারিত পেমেন্ট সমূহ</h3>
             
             <div className="flex flex-col gap-3 mt-4">
+              {renderPaymentRow('admission', 'ভর্তি ফি')}
               {renderPaymentRow('food', 'খোরাকি')}
               {renderPaymentRow('electricity', 'বিদ্যুৎ বিল')}
               {renderPaymentRow('tuition', 'বেতন')}
@@ -172,7 +173,7 @@ export default function FeeCollection() {
 
         {/* Print Receipt Section */}
         {(() => {
-          const catLabels: any = { food: 'খোরাকি', electricity: 'বিদ্যুৎ বিল', tuition: 'বেতন', development: 'উন্নয়ন ফি', library: 'পাঠাগার ফি' };
+          const catLabels: any = { admission: 'ভর্তি ফি', food: 'খোরাকি', electricity: 'বিদ্যুৎ বিল', tuition: 'বেতন', development: 'উন্নয়ন ফি', library: 'পাঠাগার ফি' };
           const items: ReceiptItem[] = (activeStudent.payments || []).map((p: any, idx: number) => ({
             sl: idx + 1,
             description: catLabels[p.feeCategory] + (p.installment ? ` (${p.installment} কিস্তি)` : ''),

@@ -101,12 +101,29 @@ export const StudentProvider = ({ children }: { children: ReactNode }) => {
     window.addEventListener('offline', handleOffline);
     setSyncStatus(navigator.onLine ? 'synced' : 'offline');
 
+    const beforePrint = () => {
+      document.documentElement.classList.remove('dark');
+    };
+    const afterPrint = () => {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme === 'dark' || (!savedTheme && theme === 'dark')) {
+        document.documentElement.classList.add('dark');
+      }
+      // Fire a custom event to notify components that print finished
+      window.dispatchEvent(new Event('print-completed'));
+    };
+
+    window.addEventListener('beforeprint', beforePrint);
+    window.addEventListener('afterprint', afterPrint);
+
     return () => {
       unsubscribeAuth();
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('beforeprint', beforePrint);
+      window.removeEventListener('afterprint', afterPrint);
     };
-  }, []);
+  }, [theme]);
 
   useEffect(() => {
     if (user) {

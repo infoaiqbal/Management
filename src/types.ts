@@ -25,6 +25,7 @@ export interface FeeItem {
 }
 
 export interface Fees {
+  admission?: FeeItem; // ভর্তি ফি
   food: FeeItem; // খোরাকি
   electricity: FeeItem; // বিদ্যুৎ বিল
   tuition: FeeItem; // বেতন

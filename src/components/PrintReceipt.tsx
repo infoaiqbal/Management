@@ -23,42 +23,45 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ title, student, item
   const totalAmount = items.reduce((sum, item) => sum + item.amount, 0);
 
   return (
-    <div className="hidden print:block font-kalpurush w-full mx-auto" style={{
+    <div className="hidden print:block font-kalpurush" style={{
       width: '105mm', // A4 Quarter (approx A6) width
       height: '148mm', // A4 Quarter height
       padding: '10mm',
       border: '1px solid #ccc',
       boxSizing: 'border-box',
       pageBreakInside: 'avoid',
-      position: 'relative'
+      position: 'relative',
+      margin: '0',
+      background: 'white',
+      color: 'black'
     }}>
       {/* Header */}
-      <div className="flex items-start gap-3 mb-2">
+      <div className="flex flex-col items-center justify-center text-center mb-2">
         {settings.madrasaLogo && (
-          <img src={settings.madrasaLogo} alt="Logo" className="w-12 h-12 object-contain" />
+          <img src={settings.madrasaLogo} alt="Logo" className="w-12 h-12 object-cover rounded-full mb-1" />
         )}
         <div>
           <h1 className="text-xl font-bold text-black leading-tight">{settings.madrasaName}</h1>
-          <p className="text-xs text-gray-800">{settings.address}</p>
+          <p className="text-xs text-black">{settings.address}</p>
         </div>
       </div>
       
       {/* Title & Date */}
-      <div className="flex justify-between items-end mb-2">
-        <h2 className="text-lg font-bold border-b-2 border-black inline-block pb-1">{title}</h2>
-        <div className="text-sm">তারিখ: {toBng(new Date(date).toLocaleDateString('en-GB'))}</div>
+      <div className="relative mb-2 mt-2">
+        <h2 className="text-lg font-bold text-center w-full">{title}</h2>
+        <div className="text-sm absolute right-0 top-0 mt-1">তারিখ: {toBng(new Date(date).toLocaleDateString('en-GB'))}</div>
       </div>
       
       <hr className="border-black mb-3" />
       
       {/* Student Details */}
       <div className="text-sm mb-4 space-y-1">
-        <div className="flex gap-4">
-          <div className="flex-1"><strong>দাখেলা:</strong> {toBng(student.id)}</div>
+        <div className="flex justify-between gap-4">
+          <div><strong>দাখেলা:</strong> {toBng(student.id)}</div>
         </div>
-        <div className="flex gap-4">
-          <div className="flex-1"><strong>নাম:</strong> {student.name}</div>
-          <div className="flex-1"><strong>জামাত:</strong> {student.admissionClass}</div>
+        <div className="flex justify-between gap-4">
+          <div><strong>নাম:</strong> {student.name}</div>
+          <div className="text-right"><strong>জামাত:</strong> {student.admissionClass}</div>
         </div>
         <div>
           <strong>ঠিকানা:</strong> {student.presentAddress?.village}, {student.presentAddress?.thana}, {student.presentAddress?.district}

@@ -84,13 +84,20 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
 
   // ফিস (Fees State)
   const buildInitialFee = (): FeeItem => ({ applicable: false, amount: 0, type: 'monthly' });
-  const [feesData, setFeesData] = useState({
+  const [feesData, setFeesData] = useState<Fees>({
+    admission: { applicable: false, amount: 0, type: 'one-time' },
     food: buildInitialFee(),
     electricity: buildInitialFee(),
     tuition: buildInitialFee(),
     development: buildInitialFee(),
     library: buildInitialFee()
   });
+
+  useEffect(() => {
+    const handlePrintCompleted = () => setPrintMode('form');
+    window.addEventListener('print-completed', handlePrintCompleted);
+    return () => window.removeEventListener('print-completed', handlePrintCompleted);
+  }, []);
 
   useEffect(() => {
     if (editId) {
@@ -527,8 +534,8 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
             {
               // Fees mapping array
               (Object.keys(feesData) as Array<keyof Fees>).map((feeKey) => {
-                const labels: any = { food: 'খোরাকি', electricity: 'বিদ্যুৎ বিল', tuition: 'বেতন', development: 'উন্নয়ন ফি', library: 'পাঠাগার ফি' };
-                const feeState: FeeItem = feesData[feeKey];
+                const labels: any = { admission: 'ভর্তি ফি', food: 'খোরাকি', electricity: 'বিদ্যুৎ বিল', tuition: 'বেতন', development: 'উন্নয়ন ফি', library: 'পাঠাগার ফি' };
+                const feeState: FeeItem = feesData[feeKey]!;
                 
                 return (
                   <div key={feeKey} className="flex flex-col md:flex-row md:items-center gap-4 bg-gray-50 dark:bg-gray-800/30 p-4 rounded-md">
@@ -638,22 +645,22 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
       
       {/* Print Receipt Section (Only active when printMode === 'receipt') */}
       {printMode === 'receipt' && (() => {
-        const catLabels: any = { food: 'খোরাকি', electricity: 'বিদ্যুৎ বিল', tuition: 'বেতন', development: 'উন্নয়ন ফি', library: 'পাঠাগার ফি' };
+        const catLabels: any = { admission: 'ভর্তি ফি', food: 'খোরাকি', electricity: 'বিদ্যুৎ বিল', tuition: 'বেতন', development: 'উন্নয়ন ফি', library: 'পাঠাগার ফি' };
         const items: ReceiptItem[] = [];
         let sl = 1;
-        (Object.keys(formData.fees) as Array<keyof Fees>).forEach(key => {
-          if (formData.fees[key].applicable) {
+        (Object.keys(feesData) as Array<keyof Fees>).forEach(key => {
+          if (feesData[key] && feesData[key]!.applicable) {
             items.push({
               sl: sl++,
-              description: catLabels[key] + (formData.fees[key].type === 'installment' ? ' (ভর্তির সময়)' : ''),
+              description: catLabels[key] + (feesData[key]!.type === 'installment' ? ' (ভর্তির সময়)' : ''),
               month: '-',
-              amount: formData.fees[key].amount
+              amount: feesData[key]!.amount
             });
           }
         });
         
         return (
-          <div className="hidden print:block absolute top-0 left-0 bg-white w-full h-full z-50">
+          <div className="hidden print:block absolute top-0 left-0 w-full h-full z-50 m-0 p-0 bg-white">
             <PrintReceipt 
               title="ভর্তির রশিদ"
               student={formData as Student}
