@@ -184,9 +184,9 @@ export default function ReportGeneration() {
             </thead>
             <tbody>
               {finalData.map((s, idx) => (
-                <tr key={s.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30 print:hover:bg-transparent dark:text-gray-200 print:text-black">
+                <tr key={toBng(s.id)} className="hover:bg-gray-50 dark:hover:bg-gray-800/30 print:hover:bg-transparent dark:text-gray-200 print:text-black">
                   <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2 text-center">{toBng(idx + 1)}</td>
-                  <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{s.id}</td>
+                  <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{toBng(s.id)}</td>
                   <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{s.name}</td>
                   {!filterClass && <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{s.admissionClass || '-'}</td>}
                   
@@ -205,20 +205,20 @@ export default function ReportGeneration() {
                   {reportType === 'bloodGroup' && (
                     <>
                       <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2 text-center font-medium text-red-600 dark:text-red-400 print:text-black">{s.bloodGroup || '-'}</td>
-                      <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{s.guardianMobile || s.murubbiMobile || '-'}</td>
+                      <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{toBng(s.guardianMobile || s.murubbiMobile) || '-'}</td>
                     </>
                   )}
                   {reportType === 'guardianContact' && (
                     <>
                       <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{s.guardianName || '-'}</td>
                       <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{s.guardianRelation || '-'}</td>
-                      <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{s.guardianMobile || '-'}</td>
+                      <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{toBng(s.guardianMobile) || '-'}</td>
                     </>
                   )}
                   {reportType === 'murubbiContact' && (
                     <>
                       <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{s.murubbiName || '-'}</td>
-                      <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{s.murubbiMobile || '-'}</td>
+                      <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{toBng(s.murubbiMobile) || '-'}</td>
                     </>
                   )}
                   {reportType === 'addressList' && (
@@ -240,14 +240,14 @@ export default function ReportGeneration() {
                   {reportType === 'zakatList' && (
                     <>
                       <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{s.fatherName || '-'}</td>
-                      <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{s.guardianMobile || s.murubbiMobile || '-'}</td>
+                      <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{toBng(s.guardianMobile || s.murubbiMobile) || '-'}</td>
                     </>
                   )}
                   {reportType === 'fullInfo' && (
                     <>
                       <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{s.fatherName || '-'}</td>
                       <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{s.motherName || '-'}</td>
-                      <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{s.dob || '-'}</td>
+                      <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{toBng(s.dob) || '-'}</td>
                       <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{s.bloodGroup || '-'}</td>
                     </>
                   )}

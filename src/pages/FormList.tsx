@@ -4,6 +4,7 @@ import { getStudentTerms } from '../utils/studentTerms';
 import { Pencil, Trash2, CheckCircle } from 'lucide-react';
 import { toBng } from '../utils/banglaHelpers';
 import { Student } from '../types';
+import CustomSelect from '../components/CustomSelect';
 
 export default function FormList({ onEdit, isPendingView = false }: { onEdit?: (id: string) => void, isPendingView?: boolean }) {
   const { students, settings, deleteStudent, updateStudent, showAlert } = useStudents();
@@ -48,25 +49,29 @@ export default function FormList({ onEdit, isPendingView = false }: { onEdit?: (
           <p className="text-gray-500 dark:text-gray-400 mt-1">মোট {terms.title}: {toBng(filteredStudents.length)} জন</p>
         </div>
         
-        <div className="flex gap-3">
-          <select 
-            value={filterClass} 
-            onChange={e => setFilterClass(e.target.value)}
-            className="px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-[#0f2119] text-gray-800 dark:text-gray-200 outline-none focus:ring-2 focus:ring-emerald-500"
-          >
-            <option value="">সব জামাত</option>
-            {uniqueClasses.map(cls => (
-              <option key={cls} value={cls}>{cls}</option>
-            ))}
-          </select>
-          <select 
-            value={filterSort} 
-            onChange={e => setFilterSort(e.target.value)}
-            className="px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-[#0f2119] text-gray-800 dark:text-gray-200 outline-none focus:ring-2 focus:ring-emerald-500"
-          >
-            <option value="newest">সবচেয়ে নতুন</option>
-            <option value="oldest">সবচেয়ে পুরাতন</option>
-          </select>
+        <div className="flex gap-3 w-full md:w-auto md:min-w-[350px]">
+          <div className="flex-1 md:w-48">
+            <CustomSelect
+              value={filterClass}
+              onChange={setFilterClass}
+              options={[
+                { value: '', label: 'সব জামাত' },
+                ...uniqueClasses.map(cls => ({ value: cls, label: cls }))
+              ]}
+              className="px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-[#0f2119] text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-emerald-500"
+            />
+          </div>
+          <div className="flex-1 md:w-48">
+            <CustomSelect
+              value={filterSort}
+              onChange={setFilterSort}
+              options={[
+                { value: 'newest', label: 'সবচেয়ে নতুন' },
+                { value: 'oldest', label: 'সবচেয়ে পুরাতন' }
+              ]}
+              className="px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-[#0f2119] text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-emerald-500"
+            />
+          </div>
         </div>
       </div>
 

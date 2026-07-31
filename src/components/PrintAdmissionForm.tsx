@@ -2,6 +2,7 @@ import React from 'react';
 import { Student, Settings } from '../types';
 import { PrintHeader } from './PrintHeader';
 import { getStudentTerms } from '../utils/studentTerms';
+import { toBng } from '../utils/banglaHelpers';
 
 interface Props {
   student: Partial<Student>;
@@ -17,14 +18,13 @@ export const PrintAdmissionForm: React.FC<Props> = ({ student, settings, isNew }
     <div className="w-full text-black bg-white">
       <PrintHeader settings={settings} title={`ভর্তি ফরম`} />
       
-      <div className="text-center mb-6">
-        <h2 className="text-xl font-bold uppercase underline decoration-double">{terms.singular} ভর্তি ফরম</h2>
-        <p className="mt-1 font-medium">{isNew ? 'নতুন ভর্তি' : 'পুরাতন ভর্তি (নবায়ন)'}</p>
+      <div className="text-center mb-6 mt-2">
+        <p className="font-bold underline text-lg">{isNew ? 'নতুন ভর্তি' : 'পুরাতন ভর্তি (নবায়ন)'}</p>
       </div>
 
       <div className="border border-gray-400 p-4 rounded-sm space-y-4 text-sm font-medium">
         <div className="flex justify-between border-b border-gray-300 pb-2">
-          <span><strong>দাখেলা নাম্বার:</strong> {student.id}</span>
+          <span><strong>দাখেলা নাম্বার:</strong> {toBng(student.id)}</span>
           <span><strong>ভর্তির বিভাগ:</strong> {student.admissionSection}</span>
           <span><strong>জামাত:</strong> {student.admissionClass}</span>
         </div>
@@ -32,7 +32,7 @@ export const PrintAdmissionForm: React.FC<Props> = ({ student, settings, isNew }
         <div className="grid grid-cols-2 gap-4">
           <div><strong>নাম:</strong> {student.name}</div>
           <div><strong>রক্তের গ্রুপ:</strong> {student.bloodGroup || '-'}</div>
-          <div><strong>জন্ম তারিখ:</strong> {student.dob}</div>
+          <div><strong>জন্ম তারিখ:</strong> {toBng(student.dob) || '-'}</div>
           <div><strong>হাফেজ:</strong> {student.isHafiz ? 'হ্যাঁ' : 'না'}</div>
           <div><strong>পিতার নাম:</strong> {student.fatherName}</div>
           <div><strong>পেশা:</strong> {student.fatherOccupation || '-'}</div>
@@ -50,7 +50,7 @@ export const PrintAdmissionForm: React.FC<Props> = ({ student, settings, isNew }
         <div className="border-t border-gray-300 pt-3 grid grid-cols-2 gap-4">
           <div><strong>অভিভাবকের নাম:</strong> {student.guardianName || '-'}</div>
           <div><strong>সম্পর্ক:</strong> {student.guardianRelation || '-'}</div>
-          <div><strong>মোবাইল:</strong> {student.guardianMobile || '-'}</div>
+          <div><strong>মোবাইল:</strong> {toBng(student.guardianMobile) || '-'}</div>
           <div><strong>পেশা:</strong> {student.guardianOccupation || '-'}</div>
         </div>
 
@@ -95,3 +95,4 @@ export const PrintAdmissionForm: React.FC<Props> = ({ student, settings, isNew }
 };
 
 export default PrintAdmissionForm;
+

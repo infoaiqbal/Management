@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Menu, Moon, Sun, X, Home, UserPlus, Files, Wallet, List, Database, Search, User, Crown } from 'lucide-react';
 import { useStudents } from '../store/StudentContext';
+import { toBng } from '../utils/banglaHelpers';
 
 
 /**
@@ -90,7 +91,7 @@ export default function Layout({ children, activeMenuItem, setActiveMenuItem }: 
                   </div>
                   {item.badge !== undefined && item.badge > 0 && (
                     <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                      {item.badge}
+                      {toBng(item.badge)}
                     </span>
                   )}
                 </button>
