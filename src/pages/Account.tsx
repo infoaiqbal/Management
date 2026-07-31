@@ -274,6 +274,100 @@ export default function Account() {
           </div>
 
           <div>
+            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2">রশিদের হেডার স্টাইল</label>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="radio" 
+                  name="headerType" 
+                  value="text_logo" 
+                  checked={formData.headerType === 'text_logo' || !formData.headerType} 
+                  onChange={handleChange} 
+                  className="accent-emerald-600"
+                />
+                <span className="text-gray-800 dark:text-gray-200">নাম, ঠিকানা ও লোগো</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="radio" 
+                  name="headerType" 
+                  value="header_photo" 
+                  checked={formData.headerType === 'header_photo'} 
+                  onChange={handleChange} 
+                  className="accent-emerald-600"
+                />
+                <span className="text-gray-800 dark:text-gray-200">হেডার ফটো</span>
+              </label>
+            </div>
+          </div>
+
+          {formData.headerType === 'header_photo' && (
+            <div>
+              <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">হেডার ফটো আপলোড (রশিদে প্রিন্ট হবে)</label>
+              <div 
+                className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-emerald-200 dark:border-emerald-800/50 border-dashed rounded-md relative hover:bg-gray-50 dark:hover:bg-gray-800/20 transition-colors"
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const file = e.dataTransfer.files[0];
+                  if (file && file.type.startsWith('image/')) {
+                    if (file.size > 800 * 1024) {
+                      showAlert('ছবির সাইজ ৮০০ কেবি এর নিচে হতে হবে!', 'warning');
+                      return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                      setFormData(prev => ({ ...prev, headerPhoto: event.target?.result as string }));
+                    };
+                    reader.readAsDataURL(file);
+                  }
+                }}
+              >
+                <div className="space-y-1 text-center">
+                  {formData.headerPhoto ? (
+                    <div className="relative">
+                      <img src={formData.headerPhoto} alt="Header preview" className="mx-auto h-24 w-auto object-contain mb-4 rounded-md" />
+                      <button type="button" onClick={() => setFormData(prev => ({ ...prev, headerPhoto: '' }))} className="absolute -top-2 -right-2 bg-red-100 text-red-600 hover:bg-red-200 rounded-full p-1 text-xs px-2">রিমুভ</button>
+                    </div>
+                  ) : (
+                    <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                      <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                  <div className="flex text-sm text-gray-600 dark:text-gray-400 justify-center">
+                    <label htmlFor="headerphoto-upload" className="relative cursor-pointer bg-transparent rounded-md font-medium text-emerald-600 hover:text-emerald-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-emerald-500">
+                      <span>ফাইল আপলোড করুন</span>
+                      <input 
+                        id="headerphoto-upload" 
+                        name="headerphoto-upload" 
+                        type="file" 
+                        accept="image/*"
+                        className="sr-only" 
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            if (file.size > 800 * 1024) {
+                              showAlert('ছবির সাইজ ৮০০ কেবি এর নিচে হতে হবে!', 'warning');
+                              return;
+                            }
+                            const reader = new FileReader();
+                            reader.onload = (event) => {
+                              setFormData(prev => ({ ...prev, headerPhoto: event.target?.result as string }));
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+                    </label>
+                    <p className="pl-1">বা টেনে এনে ছেড়ে দিন</p>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">PNG, JPG আপলোড করা যাবে</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div>
             <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2">এখানে কারা পড়ে?</label>
             <div className="flex gap-4">
               <label className="flex items-center gap-2 cursor-pointer">

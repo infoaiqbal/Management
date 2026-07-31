@@ -14,6 +14,8 @@ export interface MadrasaSettings {
   address: string;
   studentGender: 'boys' | 'girls' | 'both';
   signature?: string;
+  headerType?: 'text_logo' | 'header_photo';
+  headerPhoto?: string;
 }
 
 export type FeeType = 'monthly' | 'one-time' | 'installment';

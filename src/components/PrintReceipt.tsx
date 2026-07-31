@@ -31,20 +31,26 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ title, student, item
       boxSizing: 'border-box',
       pageBreakInside: 'avoid',
       position: 'relative',
-      margin: '0',
+      margin: '0 auto auto 0', // Top left corner
       background: 'white',
       color: 'black'
     }}>
       {/* Header */}
-      <div className="flex flex-col items-center justify-center text-center mb-2">
-        {settings.madrasaLogo && (
-          <img src={settings.madrasaLogo} alt="Logo" className="w-12 h-12 object-cover rounded-full mb-1" />
-        )}
-        <div>
-          <h1 className="text-xl font-bold text-black leading-tight">{settings.madrasaName}</h1>
-          <p className="text-xs text-black">{settings.address}</p>
+      {settings.headerType === 'header_photo' && settings.headerPhoto ? (
+        <div className="mb-2 text-center w-full">
+          <img src={settings.headerPhoto} alt="Header" className="w-full h-auto object-contain max-h-24" />
         </div>
-      </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center text-center mb-2">
+          {settings.madrasaLogo && (
+            <img src={settings.madrasaLogo} alt="Logo" className="w-12 h-12 object-cover rounded-full mb-1" />
+          )}
+          <div>
+            <h1 className="text-xl font-bold text-black leading-tight">{settings.madrasaName}</h1>
+            <p className="text-xs text-black">{settings.address}</p>
+          </div>
+        </div>
+      )}
       
       {/* Title & Date */}
       <div className="relative mb-2 mt-2">

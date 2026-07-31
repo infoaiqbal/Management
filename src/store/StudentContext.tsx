@@ -45,7 +45,9 @@ const defaultSettings: MadrasaSettings = {
   adminName: 'এডমিন',
   address: 'ঢাকা, বাংলাদেশ',
   studentGender: 'boys',
-  signature: ''
+  signature: '',
+  headerType: 'text_logo',
+  headerPhoto: ''
 };
 
 export const StudentProvider = ({ children }: { children: ReactNode }) => {
