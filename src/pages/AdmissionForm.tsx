@@ -241,7 +241,6 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
       if (onSuccess) onSuccess();
     } else {
       await addStudent(newStudent);
-      showAlert(`${terms.singular} ভর্তি সম্পন্ন হয়েছে!`, 'success');
       
       // Reset Form
       setFormData(prev => ({
@@ -713,7 +712,7 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
             )}
             
             {currentStep === totalSteps && (
-              <button type="button" onClick={() => { setIsPrinting(true); setTimeout(() => window.print(), 100); }} className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded-md transition-colors text-sm md:text-base">
+              <button type="button" onClick={() => { setIsPrinting(true); setTimeout(() => window.print(), 300); }} className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded-md transition-colors text-sm md:text-base">
                 ফরম প্রিন্ট
               </button>
             )}
@@ -732,7 +731,7 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
       </form>
       
       {isPrinting && (
-        <div className="hidden print:block absolute top-0 left-0 w-full z-50 m-0 p-0 bg-white">
+        <div className="hidden print:block w-full bg-white text-black">
           <PrintAdmissionForm 
             student={formData as Student}
             settings={settings}
