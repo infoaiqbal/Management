@@ -41,13 +41,20 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ title, student, item
           <img src={settings.headerPhoto} alt="Header" className="w-full h-auto object-contain max-h-24" />
         </div>
       ) : (
-        <div className="flex items-center justify-center gap-3 mb-2">
+        <div className="flex items-center justify-center gap-3 mb-2 max-w-full overflow-hidden">
           {settings.madrasaLogo && (
-            <img src={settings.madrasaLogo} alt="Logo" className="w-12 h-12 object-cover rounded-full" />
+            <img src={settings.madrasaLogo} alt="Logo" className="w-12 h-12 object-cover rounded-full shrink-0" />
           )}
-          <div className="text-left">
-            <h1 className="text-xl font-bold text-black leading-tight">{settings.madrasaName}</h1>
-            <p className="text-xs text-black">{settings.address}</p>
+          <div className="text-left min-w-0">
+            <h1 
+              className="font-bold text-black leading-tight whitespace-nowrap"
+              style={{
+                fontSize: settings.madrasaName.length > 30 ? '11px' : settings.madrasaName.length > 25 ? '13px' : settings.madrasaName.length > 18 ? '15px' : '18px'
+              }}
+            >
+              {settings.madrasaName}
+            </h1>
+            <p className="text-xs text-black whitespace-nowrap overflow-hidden text-ellipsis">{settings.address}</p>
           </div>
         </div>
       )}
