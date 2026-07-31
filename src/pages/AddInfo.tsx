@@ -18,12 +18,20 @@ export default function AddInfo() {
   const [newInfos, setNewInfos] = useState([{ name: '', value: '' }]);
 
   const handleSearch = () => {
-    const st = students.find(s => s.id === searchId || toEng(s.id) === toEng(searchId));
+    const st = students.find(s => 
+      s.status !== 'pending' && (
+      s.id === searchId || 
+      toEng(s.id) === toEng(searchId) || 
+      s.guardianMobile === searchId || 
+      toEng(s.guardianMobile || '') === toEng(searchId) ||
+      s.murubbiMobile === searchId ||
+      toEng(s.murubbiMobile || '') === toEng(searchId))
+    );
     if (st) {
       setActiveStudent(st);
       setNewInfos([{ name: '', value: '' }]); // reset fields
     } else {
-      showAlert(`কোনো ${terms.singular} পাওয়া যায়নি!`, 'warning');
+      showAlert(`এই নাম্বার বা দাখেলায় কোনো অনুমোদিত ${terms.singular} পাওয়া যায়নি!`, 'warning');
       setActiveStudent(null);
     }
   };
@@ -87,7 +95,7 @@ export default function AddInfo() {
         
         <div className="flex gap-4 items-end">
           <div className="flex-1 max-w-sm">
-            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">দাখেলা নাম্বার</label>
+            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">দাখেলা বা মোবাইল নাম্বার</label>
             <input 
               type="tel" 
               value={searchId} 

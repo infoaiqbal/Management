@@ -82,4 +82,5 @@ export interface Student {
   fees: Fees;
   extraInfo: ExtraInfo[];
   payments: Payment[];
+  status?: 'pending' | 'approved';
 }

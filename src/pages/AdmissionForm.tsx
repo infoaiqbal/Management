@@ -6,7 +6,7 @@ import { Student, Address, Fees, FeeItem } from '../types';
 import AddressFields from '../components/AddressFields';
 import CustomSelect from '../components/CustomSelect';
 import { BookOpen } from 'lucide-react';
-import { PrintReceipt, ReceiptItem } from '../components/PrintReceipt';
+import PrintAdmissionForm from '../components/PrintAdmissionForm';
 
 /**
  * ==========================================
@@ -19,7 +19,9 @@ import { PrintReceipt, ReceiptItem } from '../components/PrintReceipt';
 export default function AdmissionForm({ editId, onSuccess }: { editId?: string | null; onSuccess?: () => void }) {
   const { students, settings, addStudent, updateStudent, showAlert } = useStudents();
   
-  const [printMode, setPrintMode] = useState<'form' | 'receipt'>('form');
+  const [isPrinting, setIsPrinting] = useState(false);
+  const [studentStatus, setStudentStatus] = useState<'new' | 'old'>('new');
+  const [searchOldId, setSearchOldId] = useState('');
 
   // স্বয়ংক্রিয় দাখেলা নাম্বার জেনারেট (Auto generate Daquela Number)
   const generateDaquela = () => {
@@ -65,7 +67,59 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 6;
 
+  const currentGender = settings.studentGender === 'both' ? (formData.gender === 'girl' ? 'girls' : 'boys') : settings.studentGender;
+  const terms = getStudentTerms(currentGender);
+
+  const handleSearchOld = () => {
+    const st = students.find(s => 
+      s.id === searchOldId || 
+      toEng(s.id) === toEng(searchOldId) || 
+      s.guardianMobile === searchOldId || 
+      toEng(s.guardianMobile || '') === toEng(searchOldId) ||
+      s.murubbiMobile === searchOldId ||
+      toEng(s.murubbiMobile || '') === toEng(searchOldId)
+    );
+    if (st) {
+      setFormData({
+        id: generateDaquela(), // Keep new ID
+        name: st.name,
+        dob: st.dob,
+        nid: st.nid || '',
+        gender: st.gender,
+        bloodGroup: st.bloodGroup || '',
+        isHafiz: st.isHafiz ? 'হ্যাঁ' : 'না',
+        fatherName: st.fatherName,
+        motherName: st.motherName || '',
+        fatherOccupation: st.fatherOccupation || '',
+        presentAddress: st.presentAddress || { ...initialAddress },
+        permanentAddress: st.permanentAddress || { ...initialAddress },
+        guardianName: st.guardianName || '',
+        guardianRelation: st.guardianRelation || '',
+        guardianOccupation: st.guardianOccupation || '',
+        guardianMobile: st.guardianMobile || '',
+        guardianEmail: st.guardianEmail || '',
+        murubbiName: st.murubbiName || '',
+        murubbiMobile: st.murubbiMobile || '',
+        murubbiEmail: st.murubbiEmail || '',
+        prevInstitutionName: st.prevInstitutionName || '',
+        prevInstitutionAddress: st.prevInstitutionAddress || '',
+        prevInstitutionStudied: st.prevInstitutionStudied || '',
+        admissionSection: st.admissionSection,
+        admissionClass: st.admissionClass,
+        studentType: st.studentType || 'আবাসিক',
+        wantsZakat: st.wantsZakat ? 'হ্যাঁ' : 'না'
+      });
+      showAlert(`পুরাতন ${terms.singular_er} তথ্য পাওয়া গেছে!`, 'success');
+      setCurrentStep(5); // 5 steps auto filled, take them to step 5 (or 6)
+    } else {
+      showAlert(`এই নাম্বার বা দাখেলায় কোনো ${terms.singular} পাওয়া যায়নি!`, 'warning');
+    }
+  };
+
   const nextStep = () => {
+    if (currentStep === 5) {
+      showAlert('ফরম পূরণ সম্পন্ন হয়েছে। এখন বেতন সংক্রান্ত তথ্য দিন', 'success');
+    }
     if (currentStep < totalSteps) setCurrentStep(currentStep + 1);
   };
 
@@ -85,7 +139,6 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
   // ফিস (Fees State)
   const buildInitialFee = (): FeeItem => ({ applicable: false, amount: 0, type: 'monthly' });
   const [feesData, setFeesData] = useState<Fees>({
-    admission: { applicable: false, amount: 0, type: 'one-time' },
     food: buildInitialFee(),
     electricity: buildInitialFee(),
     tuition: buildInitialFee(),
@@ -94,7 +147,7 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
   });
 
   useEffect(() => {
-    const handlePrintCompleted = () => setPrintMode('form');
+    const handlePrintCompleted = () => setIsPrinting(false);
     window.addEventListener('print-completed', handlePrintCompleted);
     return () => window.removeEventListener('print-completed', handlePrintCompleted);
   }, []);
@@ -175,7 +228,8 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
       fees: feesData,
       admissionDate: editId ? (students.find(s => s.id === editId)?.admissionDate || new Date().toISOString()) : new Date().toISOString(),
       extraInfo: editId ? (students.find(s => s.id === editId)?.extraInfo || []) : [],
-      payments: editId ? (students.find(s => s.id === editId)?.payments || []) : []
+      payments: editId ? (students.find(s => s.id === editId)?.payments || []) : [],
+      status: editId ? (students.find(s => s.id === editId)?.status || 'approved') : 'pending'
     };
 
     const currentGender = settings.studentGender === 'both' ? (formData.gender === 'girl' ? 'girls' : 'boys') : settings.studentGender;
@@ -207,14 +261,11 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
   const inputClass = "w-full p-2 bg-transparent border-2 rounded-sm border-dashed border-gray-400 dark:border-gray-600 print:border-gray-400 print:text-black outline-none focus:border-emerald-500 dark:focus:border-emerald-400 transition-colors text-gray-900 dark:text-gray-100";
   const selectClass = "w-full p-2 bg-transparent border-2 rounded-sm border-dashed border-gray-400 dark:border-gray-600 print:border-gray-400 print:text-black outline-none focus:border-emerald-500 dark:focus:border-emerald-400 text-gray-900 dark:text-gray-100 [&>option]:bg-white dark:[&>option]:bg-gray-800";
 
-  const currentGender = settings.studentGender === 'both' ? (formData.gender === 'girl' ? 'girls' : 'boys') : settings.studentGender;
-  const terms = getStudentTerms(currentGender);
-
   return (
     <div className="relative">
-    <div className={`max-w-4xl mx-auto bg-white dark:bg-[#0f2119] print:dark:bg-white print:text-black print:p-0 print:shadow-none p-6 lg:p-8 rounded-lg shadow-sm ${printMode === 'receipt' ? 'print:hidden' : ''}`}>
+    <div className={`max-w-4xl mx-auto bg-white dark:bg-[#0f2119] p-6 lg:p-8 rounded-lg shadow-sm ${isPrinting ? 'print:hidden' : ''}`}>
       <div className="mb-8 border-b-2 border-emerald-500 pb-4">
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 print:text-black text-center">
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 text-center">
           {editId ? `${terms.singular_er} তথ্য সম্পাদনা` : `${terms.singular} ভর্তি ফরম`}
         </h2>
         
@@ -241,6 +292,48 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
         {/* ================= ব্যক্তিগত তথ্য (Personal Info) ================= */}
         {currentStep === 1 && (
         <section>
+          {!editId && (
+            <div className="bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-lg mb-6 border border-emerald-100 dark:border-emerald-800 print:hidden">
+              <div className="flex items-center gap-6 mb-4">
+                <label className="flex items-center gap-2 cursor-pointer text-gray-800 dark:text-gray-200 font-medium">
+                  <input type="radio" name="studentStatus" checked={studentStatus === 'new'} onChange={() => setStudentStatus('new')} className="accent-emerald-600 w-4 h-4" />
+                  নতুন {terms.singular}
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer text-gray-800 dark:text-gray-200 font-medium">
+                  <input type="radio" name="studentStatus" checked={studentStatus === 'old'} onChange={() => setStudentStatus('old')} className="accent-emerald-600 w-4 h-4" />
+                  পুরাতন {terms.singular}
+                </label>
+              </div>
+              
+              {studentStatus === 'old' && (
+                <div className="flex gap-4 items-end">
+                  <div className="flex-1 max-w-sm">
+                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">দাখেলা বা মোবাইল নাম্বার দিয়ে খুঁজুন</label>
+                    <input 
+                      type="text" 
+                      value={searchOldId} 
+                      onChange={e => setSearchOldId(e.target.value)} 
+                      className={inputClass}
+                      placeholder="এখানে লিখুন..."
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleSearchOld();
+                        }
+                      }}
+                    />
+                  </div>
+                  <button 
+                    type="button"
+                    onClick={handleSearchOld}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-md font-medium transition-colors h-[42px]"
+                  >
+                    খুঁজুন
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
           <h3 className="text-lg font-semibold text-emerald-700 dark:text-emerald-400 mb-4">ব্যক্তিগত তথ্য</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -620,14 +713,9 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
             )}
             
             {currentStep === totalSteps && (
-              <>
-                <button type="button" onClick={() => { setPrintMode('form'); setTimeout(() => window.print(), 100); }} className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded-md transition-colors text-sm md:text-base">
-                  ফরম প্রিন্ট
-                </button>
-                <button type="button" onClick={() => { setPrintMode('receipt'); setTimeout(() => window.print(), 100); }} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-md transition-colors text-sm md:text-base">
-                  রশিদ প্রিন্ট
-                </button>
-              </>
+              <button type="button" onClick={() => { setIsPrinting(true); setTimeout(() => window.print(), 100); }} className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded-md transition-colors text-sm md:text-base">
+                ফরম প্রিন্ট
+              </button>
             )}
             
             {currentStep < totalSteps ? (
@@ -643,34 +731,15 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
         </div>
       </form>
       
-      {/* Print Receipt Section (Only active when printMode === 'receipt') */}
-      {printMode === 'receipt' && (() => {
-        const catLabels: any = { admission: 'ভর্তি ফি', food: 'খোরাকি', electricity: 'বিদ্যুৎ বিল', tuition: 'বেতন', development: 'উন্নয়ন ফি', library: 'পাঠাগার ফি' };
-        const items: ReceiptItem[] = [];
-        let sl = 1;
-        (Object.keys(feesData) as Array<keyof Fees>).forEach(key => {
-          if (feesData[key] && feesData[key]!.applicable) {
-            items.push({
-              sl: sl++,
-              description: catLabels[key] + (feesData[key]!.type === 'installment' ? ' (ভর্তির সময়)' : ''),
-              month: '-',
-              amount: feesData[key]!.amount
-            });
-          }
-        });
-        
-        return (
-          <div className="hidden print:block absolute top-0 left-0 w-full h-full z-50 m-0 p-0 bg-white">
-            <PrintReceipt 
-              title="ভর্তির রশিদ"
-              student={formData as Student}
-              items={items}
-              settings={settings}
-              date={new Date().toISOString()}
-            />
-          </div>
-        );
-      })()}
+      {isPrinting && (
+        <div className="hidden print:block absolute top-0 left-0 w-full z-50 m-0 p-0 bg-white">
+          <PrintAdmissionForm 
+            student={formData as Student}
+            settings={settings}
+            isNew={studentStatus === 'new'}
+          />
+        </div>
+      )}
     </div>
     </div>
   );

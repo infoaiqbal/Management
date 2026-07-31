@@ -1,45 +1,97 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useStudents } from '../store/StudentContext';
 import { getStudentTerms } from '../utils/studentTerms';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, CheckCircle } from 'lucide-react';
 import { toBng } from '../utils/banglaHelpers';
 import { Student } from '../types';
 
-/**
- * ==========================================
- * ফরম সমূহ (Form List)
- * ==========================================
- * ইতোপূর্বে যত ভর্তি ফরম পূরণ করা হয়েছে, সব এখানে শো করবে।
- */
-export default function FormList({ onEdit }: { onEdit?: (id: string) => void }) {
-  const { students, settings, deleteStudent } = useStudents();
+export default function FormList({ onEdit, isPendingView = false }: { onEdit?: (id: string) => void, isPendingView?: boolean }) {
+  const { students, settings, deleteStudent, updateStudent, showAlert } = useStudents();
   const terms = getStudentTerms(settings.studentGender);
   
-  if (students.length === 0) {
-    return (
-      <div className="w-full text-center py-20 text-gray-500">
-        কোনো ভর্তি ফরম পাওয়া যায়নি।
-      </div>
-    );
-  }
+  const [filterSort, setFilterSort] = useState('newest');
+  const [filterClass, setFilterClass] = useState('');
+
+  const filteredStudents = useMemo(() => {
+    let list = students.filter(s => isPendingView ? s.status === 'pending' : (s.status !== 'pending'));
+    
+    if (filterClass) {
+      list = list.filter(s => s.admissionClass === filterClass);
+    }
+    
+    list.sort((a, b) => {
+      const dateA = new Date(a.admissionDate || 0).getTime();
+      const dateB = new Date(b.admissionDate || 0).getTime();
+      if (filterSort === 'newest') return dateB - dateA;
+      if (filterSort === 'oldest') return dateA - dateB;
+      return 0;
+    });
+    
+    return list;
+  }, [students, isPendingView, filterSort, filterClass]);
+
+  const uniqueClasses = Array.from(new Set(students.map(s => s.admissionClass).filter(Boolean)));
+
+  const handleApprove = async (student: Student) => {
+    const updated = { ...student, status: 'approved' as const };
+    await updateStudent(updated);
+    showAlert(`${student.name}-এর ভর্তি এপ্রুভ হয়েছে!`, 'success');
+  };
 
   return (
     <div className="max-w-6xl mx-auto">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">সকল ভর্তি ফরম</h2>
-        <p className="text-gray-500 dark:text-gray-400 mt-1">মোট {terms.title}: {toBng(students.length)} জন</p>
+      <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+            {isPendingView ? 'পেন্ডিং ভর্তি ফরম' : 'সকল ভর্তি ফরম'}
+          </h2>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">মোট {terms.title}: {toBng(filteredStudents.length)} জন</p>
+        </div>
+        
+        <div className="flex gap-3">
+          <select 
+            value={filterClass} 
+            onChange={e => setFilterClass(e.target.value)}
+            className="px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-[#0f2119] text-gray-800 dark:text-gray-200 outline-none focus:ring-2 focus:ring-emerald-500"
+          >
+            <option value="">সব জামাত</option>
+            {uniqueClasses.map(cls => (
+              <option key={cls} value={cls}>{cls}</option>
+            ))}
+          </select>
+          <select 
+            value={filterSort} 
+            onChange={e => setFilterSort(e.target.value)}
+            className="px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-[#0f2119] text-gray-800 dark:text-gray-200 outline-none focus:ring-2 focus:ring-emerald-500"
+          >
+            <option value="newest">সবচেয়ে নতুন</option>
+            <option value="oldest">সবচেয়ে পুরাতন</option>
+          </select>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {students.map((student) => (
-          <StudentBox key={student.id} student={student} onDelete={deleteStudent} onEdit={onEdit} />
-        ))}
-      </div>
+      {filteredStudents.length === 0 ? (
+        <div className="w-full text-center py-20 text-gray-500">
+          কোনো ভর্তি ফরম পাওয়া যায়নি।
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredStudents.map((student) => (
+            <StudentBox 
+              key={student.id} 
+              student={student} 
+              onDelete={deleteStudent} 
+              onEdit={onEdit} 
+              onApprove={isPendingView ? handleApprove : undefined} 
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
-const StudentBox: React.FC<{ student: Student; onDelete: (id: string) => void; onEdit?: (id: string) => void }> = ({ student, onDelete, onEdit }) => {
+const StudentBox: React.FC<{ student: Student; onDelete: (id: string) => void; onEdit?: (id: string) => void; onApprove?: (student: Student) => void }> = ({ student, onDelete, onEdit, onApprove }) => {
   const [showConfirm, setShowConfirm] = useState(false);
   
   const handleDelete = async () => {
@@ -64,12 +116,12 @@ const StudentBox: React.FC<{ student: Student; onDelete: (id: string) => void; o
   }
 
   return (
-    <div className="bg-white dark:bg-[#0f2119] rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 p-5 hover:shadow-md transition-shadow relative overflow-hidden group">
-      <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
+    <div className="bg-white dark:bg-[#0f2119] rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 p-5 hover:shadow-md transition-shadow relative overflow-hidden group flex flex-col h-full">
+      <div className={`absolute top-0 left-0 w-1 h-full ${onApprove ? 'bg-amber-500' : 'bg-emerald-500'}`}></div>
       
       <div className="flex justify-between items-start mb-4">
         <div>
-          <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-1 rounded">
+          <span className={`text-xs font-semibold px-2 py-1 rounded ${onApprove ? 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30' : 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30'}`}>
             দাখেলা: {student.id}
           </span>
         </div>
@@ -87,7 +139,7 @@ const StudentBox: React.FC<{ student: Student; onDelete: (id: string) => void; o
 
       <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-1 truncate">{student.name}</h3>
       
-      <div className="space-y-2 mt-4 text-sm text-gray-600 dark:text-gray-400">
+      <div className="space-y-2 mt-4 text-sm text-gray-600 dark:text-gray-400 flex-1">
         <div className="flex justify-between border-b border-dashed border-gray-200 dark:border-gray-800 pb-1">
           <span>জামাত:</span>
           <span className="text-gray-900 dark:text-gray-200 font-medium">{student.admissionClass || '-'}</span>
@@ -100,11 +152,20 @@ const StudentBox: React.FC<{ student: Student; onDelete: (id: string) => void; o
           <span>পিতার নাম:</span>
           <span className="text-gray-900 dark:text-gray-200 truncate max-w-[150px]">{student.fatherName}</span>
         </div>
-        <div className="flex justify-between pt-1">
+        <div className="flex justify-between pt-1 mb-4">
           <span>রক্তের গ্রুপ:</span>
           <span className="font-medium text-red-500">{student.bloodGroup || '-'}</span>
         </div>
       </div>
+
+      {onApprove && (
+        <button 
+          onClick={() => onApprove(student)}
+          className="mt-4 w-full flex items-center justify-center gap-2 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-400 dark:hover:bg-emerald-900/60 py-2 rounded-md font-medium transition-colors"
+        >
+          <CheckCircle size={18} /> এপ্রুভ করুন
+        </button>
+      )}
     </div>
   );
 }

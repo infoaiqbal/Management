@@ -19,11 +19,14 @@ interface LayoutProps {
 
 export default function Layout({ children, activeMenuItem, setActiveMenuItem }: LayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const { theme, toggleTheme, settings, syncStatus, isGuest } = useStudents();
+  const { theme, toggleTheme, settings, syncStatus, isGuest, students } = useStudents();
+
+  const pendingCount = students.filter(s => s.status === 'pending').length;
 
   // সাইডবারের মেনু সমূহ
   const menuItems = [
     { id: 'home', label: 'হোম', icon: <Home size={18} /> },
+    { id: 'pending_forms', label: 'পেন্ডিং ফরম', icon: <Files size={18} />, badge: pendingCount },
     { id: 'forms', label: 'ফরম সমূহ', icon: <Files size={18} /> },
     { id: 'fees', label: 'বেতন গ্রহণ', icon: <Wallet size={18} /> },
     { id: 'reports', label: 'তালিকা তৈরি', icon: <List size={18} /> },
@@ -56,7 +59,7 @@ export default function Layout({ children, activeMenuItem, setActiveMenuItem }: 
               <img src={settings.madrasaLogo} alt="Logo" className="w-8 h-8 object-contain rounded-full" />
             )}
             <h1 className="flex-1 text-lg font-bold text-emerald-800 dark:text-emerald-400 line-clamp-2">
-              {settings.madrasaName || 'মাদরাসা ডাটাবেস'}
+              {settings.madrasaName || 'মাদ্রাসা ম্যানেজমেন্ট'}
             </h1>
           </div>
           <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md">
@@ -73,16 +76,23 @@ export default function Layout({ children, activeMenuItem, setActiveMenuItem }: 
                     setActiveMenuItem(item.id);
                     setIsSidebarOpen(false); // Close sidebar on mobile after click
                   }}
-                  className={`w-full text-left px-6 py-3 transition-colors flex items-center gap-3 ${
+                  className={`w-full text-left px-6 py-3 transition-colors flex items-center justify-between ${
                     activeMenuItem === item.id 
                       ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-r-4 border-emerald-500 font-medium' 
                       : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
                   }`}
                 >
-                  <span className={`${activeMenuItem === item.id ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400'}`}>
-                    {item.icon}
-                  </span>
-                  <span>{item.label}</span>
+                  <div className="flex items-center gap-3">
+                    <span className={`${activeMenuItem === item.id ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                      {item.icon}
+                    </span>
+                    <span>{item.label}</span>
+                  </div>
+                  {item.badge !== undefined && item.badge > 0 && (
+                    <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                      {item.badge}
+                    </span>
+                  )}
                 </button>
               </li>
             ))}
@@ -105,7 +115,7 @@ export default function Layout({ children, activeMenuItem, setActiveMenuItem }: 
             <Menu size={24} />
           </button>
           
-          <div className="font-semibold text-lg lg:hidden">মাদরাসা ডাটাবেস</div>
+          <div className="font-semibold text-lg lg:hidden">মাদ্রাসা ম্যানেজমেন্ট</div>
           
           {/* থিম টগল বাটন (Theme Toggle) */}
           <div className="ml-auto flex items-center gap-3">

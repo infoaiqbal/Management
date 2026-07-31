@@ -43,21 +43,22 @@ export default function Home({ onEdit, onNavigate }: { onEdit?: (id: string) => 
   const [modalData, setModalData] = useState<{ title: string; students: any[]; showDetails?: boolean } | null>(null);
 
   const stats = useMemo(() => {
-    const totalStudents = students.length;
+    const approvedStudents = students.filter(s => s.status !== 'pending');
+    const totalStudents = approvedStudents.length;
     
     // Active admissions this month
     const currentDate = new Date();
     const currentMonth = currentDate.getMonth();
     const currentYear = currentDate.getFullYear();
     
-    const admissionsThisMonth = students.filter(s => {
+    const admissionsThisMonth = approvedStudents.filter(s => {
       if (!s.admissionDate) return false;
       const adDate = new Date(s.admissionDate);
       return adDate.getMonth() === currentMonth && adDate.getFullYear() === currentYear;
     });
 
     const studentsByJamat: Record<string, any[]> = {};
-    students.forEach(s => {
+    approvedStudents.forEach(s => {
       const jamat = s.admissionClass || 'অনির্ধারিত';
       if (!studentsByJamat[jamat]) studentsByJamat[jamat] = [];
       studentsByJamat[jamat].push(s);
@@ -74,7 +75,7 @@ export default function Home({ onEdit, onNavigate }: { onEdit?: (id: string) => 
     const currentBngMonth = bngMonths[currentMonth];
     const pendingByFee: Record<string, any[]> = {};
 
-    students.forEach(s => {
+    approvedStudents.forEach(s => {
       if (!s.fees) return;
       Object.entries(s.fees).forEach(([key, feeItemUnknown]) => {
         const feeItem = feeItemUnknown as any;

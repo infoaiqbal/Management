@@ -87,6 +87,7 @@ function MainApp() {
       {activeMenuItem === 'home' && <Home onEdit={handleEdit} onNavigate={handleNavigation} />}
       {activeMenuItem === 'admission' && <AdmissionForm editId={editingStudentId} onSuccess={handleAdmissionSuccess} />}
       {activeMenuItem === 'forms' && <FormList onEdit={handleEdit} />}
+      {activeMenuItem === 'pending_forms' && <FormList onEdit={handleEdit} isPendingView={true} />}
       {activeMenuItem === 'fees' && <FeeCollection />}
       {activeMenuItem === 'reports' && <ReportGeneration />}
       {activeMenuItem === 'add_info' && <AddInfo />}

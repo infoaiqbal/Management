@@ -6,19 +6,12 @@ import { PrintHeader } from '../components/PrintHeader';
 import { Printer } from 'lucide-react';
 import CustomSelect from '../components/CustomSelect';
 
-/**
- * ==========================================
- * তালিকা তৈরি (Report Generation)
- * ==========================================
- * PDF প্রিন্ট এর জন্য।
- */
 export default function ReportGeneration() {
   const { students, settings } = useStudents();
   const terms = getStudentTerms(settings.studentGender);
   
   const [reportType, setReportType] = useState('studentList');
   const [filterClass, setFilterClass] = useState('');
-  const [filterAddressKey, setFilterAddressKey] = useState('');
 
   const classList = Array.from(new Set(students.map(s => s.admissionClass).filter(Boolean))) as string[];
 
@@ -26,8 +19,8 @@ export default function ReportGeneration() {
     window.print();
   };
 
-  // Filter students based on selection
-  let finalData = students;
+  // Filter students based on selection (only approved students)
+  let finalData = students.filter(s => s.status !== 'pending');
   if (filterClass) {
     finalData = finalData.filter(s => s.admissionClass === filterClass);
   }
@@ -35,14 +28,27 @@ export default function ReportGeneration() {
   if (reportType === 'hafizList') {
     finalData = finalData.filter(s => s.isHafiz);
   }
+  if (reportType === 'zakatList') {
+    finalData = finalData.filter(s => s.wantsZakat);
+  }
+
+  const getReportTitle = () => {
+    switch(reportType) {
+      case 'studentList': return `সাধারণ ${terms.singular} তালিকা`;
+      case 'hafizList': return `হিফজ সম্পন্ন ${terms.plural_der} তালিকা`;
+      case 'bloodGroup': return 'রক্তের গ্রুপ অনুযায়ী তালিকা';
+      case 'guardianContact': return 'অভিভাবকের যোগাযোগ তালিকা';
+      case 'murubbiContact': return 'মুরব্বির যোগাযোগ তালিকা';
+      case 'addressList': return 'ঠিকানা তালিকা';
+      case 'prevInstitution': return 'পূর্ববর্তী প্রতিষ্ঠানের তালিকা';
+      case 'zakatList': return 'যাকাত ফান্ডের তালিকা';
+      case 'fullInfo': return 'পূর্ণাঙ্গ প্রোফাইল তালিকা';
+      default: return `${terms.singular} তালিকা`;
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      {/* 
-        =================
-        কন্ট্রোল প্যানেল (Control Panel) - স্ক্রিন অনলি (Hide on Print) 
-        =================
-      */}
       <div className="bg-white dark:bg-[#0f2119] p-6 rounded-lg shadow-sm print:hidden">
         <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-6 border-b border-emerald-500 pb-2">রিপোর্ট ও তালিকা তৈরি</h2>
         
@@ -57,7 +63,12 @@ export default function ReportGeneration() {
                 { value: 'studentList', label: `সাধারণ ${terms.singular} তালিকা` },
                 { value: 'hafizList', label: 'হাফেজদের তালিকা' },
                 { value: 'bloodGroup', label: 'রক্তের গ্রুপ তালিকা' },
-                { value: 'mobileList', label: 'অভিভাবকের মোবাইল নম্বর' }
+                { value: 'guardianContact', label: 'অভিভাবকের যোগাযোগ' },
+                { value: 'murubbiContact', label: 'মুরব্বির যোগাযোগ' },
+                { value: 'addressList', label: 'ঠিকানা তালিকা' },
+                { value: 'prevInstitution', label: 'পূর্ববর্তী প্রতিষ্ঠানের তালিকা' },
+                { value: 'zakatList', label: 'যাকাত ফান্ডের তালিকা' },
+                { value: 'fullInfo', label: 'সকল তথ্য (সংক্ষিপ্ত)' }
               ]}
             />
           </div>
@@ -81,34 +92,20 @@ export default function ReportGeneration() {
         </div>
       </div>
 
-        {/* 
-        =================
-        প্রিন্ট এরিয়া (Print View Area)
-        =================
-      */}
       <div className="bg-white p-8 rounded-lg shadow-sm print:shadow-none print:p-0 dark:bg-[#0f2119] print:dark:bg-white print:text-black">
         <PrintHeader 
           settings={settings} 
-          title={
-            (reportType === 'studentList' ? `${terms.singular} তালিকা` :
-             reportType === 'hafizList' ? `হিফজ সম্পন্ন ${terms.plural_der} তালিকা` :
-             reportType === 'bloodGroup' ? 'রক্তের গ্রুপ অনুযায়ী তালিকা' :
-             reportType === 'mobileList' ? 'অভিভাবকের যোগাযোগ তালিকা' : '')
-          }
+          title={getReportTitle()}
           subtitle={filterClass ? `জামাত: ${filterClass}` : undefined}
         />
         
-        {/* On-screen heading (hidden in print) */}
         <div className="text-center mb-8 print:hidden relative">
           {settings.madrasaLogo && (
             <img src={settings.madrasaLogo} alt={settings.madrasaName} className="h-16 mx-auto mb-2 object-contain" />
           )}
-          <h1 className="text-2xl font-bold dark:text-gray-100 mb-2">{settings.madrasaName || 'মাদরাসা বায়তুল উলুম'}</h1>
+          <h1 className="text-2xl font-bold dark:text-gray-100 mb-2">{settings.madrasaName || 'মাদ্রাসা ম্যানেজমেন্ট'}</h1>
           <h2 className="text-lg font-semibold dark:text-gray-200">
-            {reportType === 'studentList' && `${terms.singular} তালিকা`}
-            {reportType === 'hafizList' && `হিফজ সম্পন্ন ${terms.plural_der} তালিকা`}
-            {reportType === 'bloodGroup' && 'রক্তের গ্রুপ অনুযায়ী তালিকা'}
-            {reportType === 'mobileList' && 'অভিভাবকের যোগাযোগ তালিকা'}
+            {getReportTitle()}
           </h2>
           {filterClass && (
             <h3 className="text-md font-semibold dark:text-gray-300 mt-1">
@@ -118,7 +115,7 @@ export default function ReportGeneration() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse border border-gray-300 dark:border-gray-700 print:border-gray-400">
+          <table className="w-full text-left border-collapse border border-gray-300 dark:border-gray-700 print:border-gray-400 text-sm">
             <thead>
               <tr className="bg-gray-100 dark:bg-gray-800/50 print:bg-gray-100 font-semibold text-gray-700 dark:text-gray-300 print:text-gray-800">
                 <th className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2 w-16 text-center">ক্রমিক</th>
@@ -126,10 +123,63 @@ export default function ReportGeneration() {
                 <th className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">নাম</th>
                 {!filterClass && <th className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">জামাত</th>}
                 
-                {/* Dynamic Columns based on Report Type */}
-                {reportType === 'bloodGroup' && <th className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2 text-center">রক্তের গ্রুপ</th>}
-                {reportType === 'mobileList' && <th className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">মোবাইল নম্বর</th>}
-                {reportType === 'studentList' && <th className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">গ্রাম</th>}
+                {reportType === 'studentList' && (
+                  <>
+                    <th className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">পিতার নাম</th>
+                    <th className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">গ্রাম</th>
+                  </>
+                )}
+                {reportType === 'hafizList' && (
+                  <>
+                    <th className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">পিতার নাম</th>
+                    <th className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">বিভাগ</th>
+                  </>
+                )}
+                {reportType === 'bloodGroup' && (
+                  <>
+                    <th className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2 text-center">রক্তের গ্রুপ</th>
+                    <th className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">মোবাইল নম্বর</th>
+                  </>
+                )}
+                {reportType === 'guardianContact' && (
+                  <>
+                    <th className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">অভিভাবকের নাম</th>
+                    <th className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">সম্পর্ক</th>
+                    <th className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">মোবাইল নম্বর</th>
+                  </>
+                )}
+                {reportType === 'murubbiContact' && (
+                  <>
+                    <th className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">মুরব্বির নাম</th>
+                    <th className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">মোবাইল নম্বর</th>
+                  </>
+                )}
+                {reportType === 'addressList' && (
+                  <>
+                    <th className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">বর্তমান ঠিকানা</th>
+                    <th className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">স্থায়ী ঠিকানা</th>
+                  </>
+                )}
+                {reportType === 'prevInstitution' && (
+                  <>
+                    <th className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">প্রতিষ্ঠানের নাম</th>
+                    <th className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">পঠিত জামাত</th>
+                  </>
+                )}
+                {reportType === 'zakatList' && (
+                  <>
+                    <th className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">পিতার নাম</th>
+                    <th className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">মোবাইল নম্বর</th>
+                  </>
+                )}
+                {reportType === 'fullInfo' && (
+                  <>
+                    <th className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">পিতা</th>
+                    <th className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">মাতা</th>
+                    <th className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">জন্ম তারিখ</th>
+                    <th className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">রক্ত</th>
+                  </>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -140,13 +190,71 @@ export default function ReportGeneration() {
                   <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{s.name}</td>
                   {!filterClass && <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{s.admissionClass || '-'}</td>}
                   
-                  {reportType === 'bloodGroup' && <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2 text-center font-medium text-red-600 dark:text-red-400 print:text-black">{s.bloodGroup || '-'}</td>}
-                  {reportType === 'mobileList' && <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{s.guardianMobile || s.murubbiMobile || '-'}</td>}
-                  {reportType === 'studentList' && <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{s.permanentAddress.village || s.presentAddress.village || '-'}</td>}
+                  {reportType === 'studentList' && (
+                    <>
+                      <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{s.fatherName}</td>
+                      <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{s.permanentAddress?.village || s.presentAddress?.village || '-'}</td>
+                    </>
+                  )}
+                  {reportType === 'hafizList' && (
+                    <>
+                      <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{s.fatherName}</td>
+                      <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{s.admissionSection || '-'}</td>
+                    </>
+                  )}
+                  {reportType === 'bloodGroup' && (
+                    <>
+                      <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2 text-center font-medium text-red-600 dark:text-red-400 print:text-black">{s.bloodGroup || '-'}</td>
+                      <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{s.guardianMobile || s.murubbiMobile || '-'}</td>
+                    </>
+                  )}
+                  {reportType === 'guardianContact' && (
+                    <>
+                      <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{s.guardianName || '-'}</td>
+                      <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{s.guardianRelation || '-'}</td>
+                      <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{s.guardianMobile || '-'}</td>
+                    </>
+                  )}
+                  {reportType === 'murubbiContact' && (
+                    <>
+                      <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{s.murubbiName || '-'}</td>
+                      <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{s.murubbiMobile || '-'}</td>
+                    </>
+                  )}
+                  {reportType === 'addressList' && (
+                    <>
+                      <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">
+                        {s.presentAddress ? `${s.presentAddress.village}, ${s.presentAddress.postOffice}, ${s.presentAddress.thana}, ${s.presentAddress.district}` : '-'}
+                      </td>
+                      <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">
+                        {s.permanentAddress ? `${s.permanentAddress.village}, ${s.permanentAddress.postOffice}, ${s.permanentAddress.thana}, ${s.permanentAddress.district}` : '-'}
+                      </td>
+                    </>
+                  )}
+                  {reportType === 'prevInstitution' && (
+                    <>
+                      <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{s.prevInstitutionName || '-'}</td>
+                      <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{s.prevInstitutionStudied || '-'}</td>
+                    </>
+                  )}
+                  {reportType === 'zakatList' && (
+                    <>
+                      <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{s.fatherName || '-'}</td>
+                      <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{s.guardianMobile || s.murubbiMobile || '-'}</td>
+                    </>
+                  )}
+                  {reportType === 'fullInfo' && (
+                    <>
+                      <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{s.fatherName || '-'}</td>
+                      <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{s.motherName || '-'}</td>
+                      <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{s.dob || '-'}</td>
+                      <td className="border border-gray-300 dark:border-gray-700 print:border-gray-400 p-2">{s.bloodGroup || '-'}</td>
+                    </>
+                  )}
                 </tr>
               ))}
               {finalData.length === 0 && (
-                <tr><td colSpan={6} className="text-center p-4 text-gray-500">কোনো তথ্য পাওয়া যায়নি</td></tr>
+                <tr><td colSpan={10} className="text-center p-4 text-gray-500">কোনো তথ্য পাওয়া যায়নি</td></tr>
               )}
             </tbody>
           </table>

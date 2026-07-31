@@ -19,11 +19,19 @@ export default function FeeCollection() {
   const [activeStudent, setActiveStudent] = useState<any>(null);
 
   const handleSearch = () => {
-    const st = students.find(s => s.id === searchId || toEng(s.id) === toEng(searchId));
+    const st = students.find(s => 
+      s.status !== 'pending' && (
+      s.id === searchId || 
+      toEng(s.id) === toEng(searchId) || 
+      s.guardianMobile === searchId || 
+      toEng(s.guardianMobile || '') === toEng(searchId) ||
+      s.murubbiMobile === searchId ||
+      toEng(s.murubbiMobile || '') === toEng(searchId))
+    );
     if (st) {
       setActiveStudent(st);
     } else {
-      showAlert(`এই নাম্বারে কোনো ${terms.singular} পাওয়া যায়নি!`, 'warning');
+      showAlert(`এই নাম্বার বা দাখেলায় কোনো অনুমোদিত ${terms.singular} পাওয়া যায়নি!`, 'warning');
       setActiveStudent(null);
     }
   };
