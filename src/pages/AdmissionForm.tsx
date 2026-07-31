@@ -19,7 +19,6 @@ import PrintAdmissionForm from '../components/PrintAdmissionForm';
 export default function AdmissionForm({ editId, onSuccess }: { editId?: string | null; onSuccess?: () => void }) {
   const { students, settings, addStudent, updateStudent, showAlert } = useStudents();
   
-  const [isPrinting, setIsPrinting] = useState(false);
   const [studentStatus, setStudentStatus] = useState<'new' | 'old'>('new');
   const [searchOldId, setSearchOldId] = useState('');
 
@@ -147,12 +146,6 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
   });
 
   useEffect(() => {
-    const handlePrintCompleted = () => setIsPrinting(false);
-    window.addEventListener('print-completed', handlePrintCompleted);
-    return () => window.removeEventListener('print-completed', handlePrintCompleted);
-  }, []);
-
-  useEffect(() => {
     if (editId) {
       const studentToEdit = students.find(s => s.id === editId);
       if (studentToEdit) {
@@ -241,6 +234,7 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
       if (onSuccess) onSuccess();
     } else {
       await addStudent(newStudent);
+      showAlert(`তথ্য সফলভাবে সংরক্ষিত হয়েছে!`, 'success');
       
       // Reset Form
       setFormData(prev => ({
@@ -262,7 +256,7 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
 
   return (
     <div className="relative">
-    <div className={`max-w-4xl mx-auto bg-white dark:bg-[#0f2119] p-6 lg:p-8 rounded-lg shadow-sm ${isPrinting ? 'print:hidden' : ''}`}>
+    <div className={`max-w-4xl mx-auto bg-white dark:bg-[#0f2119] p-6 lg:p-8 rounded-lg shadow-sm print:hidden`}>
       <div className="mb-8 border-b-2 border-emerald-500 pb-4">
         <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 text-center">
           {editId ? `${terms.singular_er} তথ্য সম্পাদনা` : `${terms.singular} ভর্তি ফরম`}
@@ -712,7 +706,7 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
             )}
             
             {currentStep === totalSteps && (
-              <button type="button" onClick={() => { setIsPrinting(true); setTimeout(() => window.print(), 300); }} className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded-md transition-colors text-sm md:text-base">
+              <button type="button" onClick={() => setTimeout(() => window.print(), 100)} className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded-md transition-colors text-sm md:text-base">
                 ফরম প্রিন্ট
               </button>
             )}
@@ -729,16 +723,14 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
           </div>
         </div>
       </form>
-      
-      {isPrinting && (
-        <div className="hidden print:block w-full bg-white text-black">
-          <PrintAdmissionForm 
-            student={formData as Student}
-            settings={settings}
-            isNew={studentStatus === 'new'}
-          />
-        </div>
-      )}
+    </div>
+    
+    <div className="hidden print:block w-full bg-white text-black">
+      <PrintAdmissionForm 
+        student={formData as Student}
+        settings={settings}
+        isNew={studentStatus === 'new'}
+      />
     </div>
     </div>
   );
