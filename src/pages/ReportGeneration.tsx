@@ -93,24 +93,28 @@ export default function ReportGeneration() {
             (reportType === 'studentList' ? `${terms.singular} তালিকা` :
              reportType === 'hafizList' ? `হিফজ সম্পন্ন ${terms.plural_der} তালিকা` :
              reportType === 'bloodGroup' ? 'রক্তের গ্রুপ অনুযায়ী তালিকা' :
-             reportType === 'mobileList' ? 'অভিভাবকের যোগাযোগ তালিকা' : '') +
-            (filterClass ? ` (জামাত: ${filterClass})` : '')
+             reportType === 'mobileList' ? 'অভিভাবকের যোগাযোগ তালিকা' : '')
           }
+          subtitle={filterClass ? `জামাত: ${filterClass}` : undefined}
         />
         
         {/* On-screen heading (hidden in print) */}
-        <div className="text-center mb-8 print:hidden">
+        <div className="text-center mb-8 print:hidden relative">
           {settings.madrasaLogo && (
             <img src={settings.madrasaLogo} alt={settings.madrasaName} className="h-16 mx-auto mb-2 object-contain" />
           )}
           <h1 className="text-2xl font-bold dark:text-gray-100 mb-2">{settings.madrasaName || 'মাদরাসা বায়তুল উলুম'}</h1>
-          <h2 className="text-lg font-semibold border-b-2 border-gray-300 inline-block pb-1 dark:text-gray-200">
+          <h2 className="text-lg font-semibold dark:text-gray-200">
             {reportType === 'studentList' && `${terms.singular} তালিকা`}
             {reportType === 'hafizList' && `হিফজ সম্পন্ন ${terms.plural_der} তালিকা`}
             {reportType === 'bloodGroup' && 'রক্তের গ্রুপ অনুযায়ী তালিকা'}
             {reportType === 'mobileList' && 'অভিভাবকের যোগাযোগ তালিকা'}
-            {filterClass && ` (জামাত: ${filterClass})`}
           </h2>
+          {filterClass && (
+            <h3 className="text-md font-semibold dark:text-gray-300 mt-1">
+              জামাত: {filterClass}
+            </h3>
+          )}
         </div>
 
         <div className="overflow-x-auto">

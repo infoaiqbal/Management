@@ -5,9 +5,10 @@ import { toBng } from '../utils/banglaHelpers';
 interface PrintHeaderProps {
   settings: MadrasaSettings;
   title: string;
+  subtitle?: string;
 }
 
-export const PrintHeader: React.FC<PrintHeaderProps> = ({ settings, title }) => {
+export const PrintHeader: React.FC<PrintHeaderProps> = ({ settings, title, subtitle }) => {
   const date = new Date().toLocaleDateString('en-GB'); // DD/MM/YYYY
   return (
     <div className="hidden print:block font-kalpurush w-full mb-4">
@@ -34,9 +35,10 @@ export const PrintHeader: React.FC<PrintHeaderProps> = ({ settings, title }) => 
         </div>
       )}
       
-      <div className="flex justify-between items-end mb-2">
-        <h2 className="text-xl font-bold border-b-2 border-black inline-block pb-1">{title}</h2>
-        <div className="text-base">তারিখ: {toBng(date)}</div>
+      <div className="relative mb-2 mt-2 text-center">
+        <h2 className="text-xl font-bold">{title}</h2>
+        {subtitle && <div className="text-lg font-bold mt-1">{subtitle}</div>}
+        <div className="text-base absolute right-0 top-0">তারিখ: {toBng(date)}</div>
       </div>
       
       <hr className="border-black mb-4" />
