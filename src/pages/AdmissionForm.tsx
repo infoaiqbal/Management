@@ -196,7 +196,7 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
     // Do not convert dates or emails to Bangla numerals automatically
     const shouldConvert = type !== 'date' && type !== 'email';
     const finalValue = shouldConvert ? toBng(value) : value;
-    setFormData({ ...formData, [name]: finalValue });
+    setFormData(prev => ({ ...prev, [name]: finalValue }));
   };
 
   const handleAddressChange = (type: 'presentAddress' | 'permanentAddress', field: keyof Address, value: string) => {

@@ -19,7 +19,7 @@ export const PrintAdmissionForm: React.FC<Props> = ({ student, settings, isNew }
       <PrintHeader settings={settings} title={`ভর্তি ফরম`} />
       
       <div className="text-center mb-6 mt-2">
-        <p className="font-bold underline text-lg">{isNew ? 'নতুন ভর্তি' : 'পুরাতন ভর্তি (নবায়ন)'}</p>
+        <p className="font-bold text-lg">{isNew ? 'নতুন ভর্তি' : 'পুরাতন ভর্তি (নবায়ন)'}</p>
       </div>
 
       <div className="border border-gray-400 p-4 rounded-sm space-y-4 text-sm font-medium">
