@@ -16,17 +16,14 @@ export const PrintHeader: React.FC<PrintHeaderProps> = ({ settings, title }) => 
           <img src={settings.headerPhoto} alt="Header" className="w-full h-auto object-contain max-h-32 mx-auto" />
         </div>
       ) : (
-        <div className="flex items-center justify-between mb-4">
-          <div className="w-16 shrink-0">
-            {settings.madrasaLogo && (
-              <img src={settings.madrasaLogo} alt="Logo" className="w-16 h-16 object-cover rounded-full" />
-            )}
-          </div>
-          <div className="flex-1 text-center px-2">
+        <div className="flex items-center justify-center gap-4 mb-4">
+          {settings.madrasaLogo && (
+            <img src={settings.madrasaLogo} alt="Logo" className="w-16 h-16 object-cover rounded-full" />
+          )}
+          <div className="text-left">
             <h1 className="text-2xl font-bold text-black leading-tight">{settings.madrasaName}</h1>
             <p className="text-sm text-gray-800">{settings.address}</p>
           </div>
-          <div className="w-16 shrink-0"></div>
         </div>
       )}
       

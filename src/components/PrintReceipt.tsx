@@ -41,17 +41,14 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ title, student, item
           <img src={settings.headerPhoto} alt="Header" className="w-full h-auto object-contain max-h-24" />
         </div>
       ) : (
-        <div className="flex items-center justify-between mb-2">
-          <div className="w-12 shrink-0">
-            {settings.madrasaLogo && (
-              <img src={settings.madrasaLogo} alt="Logo" className="w-12 h-12 object-cover rounded-full" />
-            )}
-          </div>
-          <div className="flex-1 text-center px-1">
+        <div className="flex items-center justify-center gap-3 mb-2">
+          {settings.madrasaLogo && (
+            <img src={settings.madrasaLogo} alt="Logo" className="w-12 h-12 object-cover rounded-full" />
+          )}
+          <div className="text-left">
             <h1 className="text-xl font-bold text-black leading-tight">{settings.madrasaName}</h1>
             <p className="text-xs text-black">{settings.address}</p>
           </div>
-          <div className="w-12 shrink-0"></div>
         </div>
       )}
       
