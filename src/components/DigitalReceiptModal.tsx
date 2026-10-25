@@ -7,6 +7,7 @@ export interface ReceiptItem {
   sl: number;
   description: string;
   month?: string;
+  days?: number;
   installment?: string;
   amount: number;
   quantity?: number | string;
@@ -44,7 +45,7 @@ const generateBarcodePattern = (seed: string): boolean[] => {
 export const DigitalReceiptModal: React.FC<DigitalReceiptModalProps> = ({
   isOpen,
   onClose,
-  title = 'ক্যাশ মেমো / ইনভয়েস',
+  title = 'বেতন রশিদ',
   student,
   items,
   settings,
@@ -77,11 +78,11 @@ export const DigitalReceiptModal: React.FC<DigitalReceiptModalProps> = ({
       {/* Outer Modal Container */}
       <div className="w-full max-w-lg bg-[#0e1726] rounded-2xl shadow-2xl border border-gray-700/60 overflow-hidden flex flex-col max-h-[96vh] print:max-h-none print:border-none print:shadow-none print:bg-white print:w-full print:max-w-none">
         
-        {/* Modal Top Header (Screen Only, matches user screenshot) */}
+        {/* Modal Top Header (Screen Only) */}
         <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 bg-[#142337] border-b border-gray-700/50 print:hidden shrink-0">
           <div className="flex items-center gap-2.5 text-emerald-400 font-semibold text-sm sm:text-base">
             <Receipt className="w-5 h-5 text-emerald-400" />
-            <span>অফিসিয়াল ডিজিটাল ক্যাশ মেমো (Receipt)</span>
+            <span>অফিসিয়াল ডিজিটাল বেতন রশিদ</span>
           </div>
           
           <div className="flex items-center gap-2">
@@ -90,7 +91,7 @@ export const DigitalReceiptModal: React.FC<DigitalReceiptModalProps> = ({
               className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs sm:text-sm px-3.5 py-2 rounded-lg flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
             >
               <Printer className="w-4 h-4" />
-              <span>প্রিন্ট মেমো</span>
+              <span>প্রিন্ট রশিদ</span>
             </button>
             <button
               onClick={onClose}
@@ -145,7 +146,6 @@ export const DigitalReceiptModal: React.FC<DigitalReceiptModalProps> = ({
                   
                   <p className="text-[11px] text-gray-500 mt-0.5">
                     মোবাইল: {toBng(student.guardianMobile || student.murubbiMobile || '০১৭১২-৩৪৫৬৭৮')}
-                    {settings.adminName ? ` • অ্যাডমিন: ${settings.adminName}` : ''}
                   </p>
                 </div>
               )}
@@ -173,9 +173,9 @@ export const DigitalReceiptModal: React.FC<DigitalReceiptModalProps> = ({
               </div>
             </div>
 
-            {/* Customer / Student Info */}
+            {/* Student Info (updated from গ্রাহকের তথ্য to শিক্ষার্থীর তথ্য) */}
             <div className="mt-4 pt-3 border-t border-gray-100">
-              <span className="text-gray-500 block text-[11px] font-medium">গ্রাহকের তথ্য</span>
+              <span className="text-gray-500 block text-[11px] font-medium">শিক্ষার্থীর তথ্য</span>
               <div className="text-base font-bold text-gray-950 mt-0.5 leading-tight">
                 {student.name}
               </div>
@@ -183,7 +183,7 @@ export const DigitalReceiptModal: React.FC<DigitalReceiptModalProps> = ({
                 {toBng(student.guardianMobile || student.murubbiMobile || '০১৭০০-০০০০০০')}
               </div>
               <div className="text-xs text-gray-500 mt-0.5">
-                জামাত: {student.admissionClass || 'উল্লেখ নেই'} • দাখেলা: {toBng(student.id)} • বিভাগ: {student.admissionSection || 'সাধারণ'}
+                জামাত: {student.admissionClass || 'উল্লেখ নেই'} • দাখেলা: {toBng(student.id)}
               </div>
               {addressStr && (
                 <div className="text-xs text-gray-500 mt-0.5">
@@ -197,34 +197,35 @@ export const DigitalReceiptModal: React.FC<DigitalReceiptModalProps> = ({
               <table className="w-full text-xs sm:text-sm">
                 <thead>
                   <tr className="border-b border-gray-200 text-gray-700 font-bold pb-2">
-                    <th className="text-left pb-2 font-bold text-gray-800">বইয়ের বিবরণ / ফি</th>
-                    <th className="text-center pb-2 font-bold text-gray-800">শেলফ / মাস</th>
-                    <th className="text-center pb-2 font-bold text-gray-800">পরিমাণ</th>
+                    <th className="text-left pb-2 font-bold text-gray-800">ফি</th>
+                    <th className="text-center pb-2 font-bold text-gray-800">মাস</th>
                     <th className="text-right pb-2 font-bold text-gray-800">মোট</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {items.map((item, idx) => (
-                    <tr key={idx} className="py-2.5">
-                      <td className="py-2 text-left">
-                        <div className="font-bold text-gray-950">{item.description}</div>
-                        <div className="text-[11px] text-gray-500">
-                          ৳ {toBng(item.amount)} প্রতি কিস্তি/মাস
-                        </div>
-                      </td>
-                      <td className="py-2 text-center">
-                        <span className="inline-block px-2.5 py-0.5 rounded text-[11px] font-medium bg-purple-50 text-purple-700 border border-purple-200">
-                          {item.month || item.installment || 'নির্ধারিত'}
-                        </span>
-                      </td>
-                      <td className="py-2 text-center font-medium text-gray-700">
-                        {toBng(item.quantity || 1)}
-                      </td>
-                      <td className="py-2 text-right font-bold text-gray-950">
-                        ৳ {toBng(item.amount)}
-                      </td>
-                    </tr>
-                  ))}
+                  {items.map((item, idx) => {
+                    const monthText = item.month 
+                      ? (item.days && item.days < 30 && !item.month.includes('দিন') 
+                          ? `${item.month} (${toBng(item.days)} দিন)` 
+                          : item.month)
+                      : (item.installment || 'এককালীন');
+
+                    return (
+                      <tr key={idx} className="py-2.5">
+                        <td className="py-2.5 text-left">
+                          <div className="font-bold text-gray-950">{item.description}</div>
+                        </td>
+                        <td className="py-2.5 text-center">
+                          <span className="inline-block px-2.5 py-0.5 rounded text-[11px] font-medium bg-purple-50 text-purple-700 border border-purple-200">
+                            {monthText}
+                          </span>
+                        </td>
+                        <td className="py-2.5 text-right font-bold text-gray-950">
+                          ৳ {toBng(item.amount)}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
 
@@ -246,14 +247,14 @@ export const DigitalReceiptModal: React.FC<DigitalReceiptModalProps> = ({
               </div>
             </div>
 
-            {/* Paid Status Box (Highlight from Screenshot) */}
+            {/* Paid Status Box */}
             <div className="mt-4 p-3 bg-emerald-50/80 border border-emerald-300 rounded-xl text-center">
               <div className="flex items-center justify-center gap-1.5 text-emerald-800 font-bold text-xs sm:text-sm">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                 <span>পরিশোধিত (PAID) - {paymentMethod}</span>
               </div>
-              <p className="text-[10px] text-gray-500 mt-0.5">
-                ক্যাশ কাউন্টার রসিদ • পরিবর্তনযোগ্য (৭ দিনের মধ্যে মেমোসহ)
+              <p className="text-xs text-emerald-900 font-medium mt-1">
+                অনুগ্রহ করে রশিদটি যত্নসহকারে সংরক্ষণ করুন।
               </p>
             </div>
 

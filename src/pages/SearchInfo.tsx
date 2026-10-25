@@ -4,7 +4,7 @@ import { getStudentTerms } from '../utils/studentTerms';
 import { toBng, toEng, generateMemoNumber } from '../utils/banglaHelpers';
 import { FeeItem, Fees } from '../types';
 import { DigitalReceiptModal, ReceiptItem } from '../components/DigitalReceiptModal';
-import { Receipt } from 'lucide-react';
+import { Receipt, Printer } from 'lucide-react';
 
 /**
  * ==========================================
@@ -84,14 +84,23 @@ function StudentProfile({ student, settings }: { student: any, settings: any }) 
   const openFullReceipt = () => {
     const payments = student.payments || [];
     if (payments.length === 0) return;
-    const items: ReceiptItem[] = payments.map((p: any, idx: number) => ({
-      sl: idx + 1,
-      description: catLabels[p.feeCategory] || p.feeCategory,
-      month: p.month,
-      installment: p.installment ? `${p.installment} কিস্তি` : undefined,
-      amount: p.amount,
-      quantity: 1
-    }));
+    const items: ReceiptItem[] = payments.map((p: any, idx: number) => {
+      const monthDisplay = p.month 
+        ? (p.days && p.days < 30 && !p.month.includes('দিন') 
+            ? `${p.month} (${toBng(p.days)} দিন)` 
+            : p.month) 
+        : undefined;
+
+      return {
+        sl: idx + 1,
+        description: catLabels[p.feeCategory] || p.feeCategory,
+        month: monthDisplay,
+        days: p.days,
+        installment: p.installment ? `${p.installment} কিস্তি` : undefined,
+        amount: p.amount,
+        quantity: 1
+      };
+    });
     setReceiptItems(items);
     setReceiptDate(new Date().toISOString());
     setReceiptMemo(generateMemoNumber(student.id + Date.now().toString()));
@@ -99,10 +108,17 @@ function StudentProfile({ student, settings }: { student: any, settings: any }) 
   };
 
   const openSingleReceipt = (payment: any) => {
+    const monthDisplay = payment.month 
+      ? (payment.days && payment.days < 30 && !payment.month.includes('দিন') 
+          ? `${payment.month} (${toBng(payment.days)} দিন)` 
+          : payment.month) 
+      : undefined;
+
     const items: ReceiptItem[] = [{
       sl: 1,
       description: catLabels[payment.feeCategory] || payment.feeCategory,
-      month: payment.month,
+      month: monthDisplay,
+      days: payment.days,
       installment: payment.installment ? `${payment.installment} কিস্তি` : undefined,
       amount: payment.amount,
       quantity: 1
@@ -203,8 +219,8 @@ function StudentProfile({ student, settings }: { student: any, settings: any }) 
               onClick={openFullReceipt}
               className="text-xs px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md flex items-center gap-1.5 transition shadow-sm font-medium"
             >
-              <Receipt size={14} />
-              ডিজিটাল মেমো (সব পেমেন্ট)
+              <Printer size={14} />
+              প্রিন্ট রশিদ
             </button>
           )}
         </div>
@@ -220,22 +236,28 @@ function StudentProfile({ student, settings }: { student: any, settings: any }) 
                     <th className="py-2 pl-2">বিবরণ</th>
                     <th className="py-2">মাস/কিস্তি</th>
                     <th className="py-2 text-right pr-2">পরিমাণ</th>
-                    <th className="py-2 text-right pr-2">ডিজিটাল রসিদ</th>
+                    <th className="py-2 text-right pr-2">রশিদ</th>
                   </tr>
                 </thead>
                 <tbody>
                   {student.payments.map((pay: any, idx: number) => {
+                    const monthText = pay.month 
+                      ? (pay.days && pay.days < 30 && !pay.month.includes('দিন') 
+                          ? `${pay.month} (${toBng(pay.days)} দিন)` 
+                          : pay.month)
+                      : (pay.installment ? `${pay.installment} কিস্তি` : '-');
+
                     return (
                       <tr key={idx} className="border-b border-gray-100 dark:border-gray-800/50 last:border-0 hover:bg-white dark:hover:bg-gray-800/50 transition-colors text-gray-800 dark:text-gray-200">
                         <td className="py-3 pl-2 font-medium">{catLabels[pay.feeCategory] || pay.feeCategory}</td>
-                        <td className="py-3 text-gray-500">{pay.month || (pay.installment ? `${pay.installment} কিস্তি` : '-')}</td>
+                        <td className="py-3 text-gray-500">{monthText}</td>
                         <td className="py-3 text-right font-medium pr-2 text-emerald-600 dark:text-emerald-400">{toBng(pay.amount)} ৳</td>
                         <td className="py-3 text-right pr-2">
                           <button
                             onClick={() => openSingleReceipt(pay)}
                             className="inline-flex items-center gap-1 text-xs px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 rounded border border-emerald-200 dark:border-emerald-800 transition font-medium"
                           >
-                            <Receipt size={12} /> মেমো
+                            <Receipt size={12} /> রশিদ
                           </button>
                         </td>
                       </tr>

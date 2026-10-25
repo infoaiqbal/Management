@@ -7,6 +7,7 @@ export interface ReceiptItem {
   sl: number;
   description: string;
   month?: string;
+  days?: number;
   installment?: string;
   amount: number;
   quantity?: number | string;
@@ -38,11 +39,11 @@ const generateBarcodePattern = (seed: string): boolean[] => {
 };
 
 export const PrintReceipt: React.FC<PrintReceiptProps> = ({ 
-  title = 'ক্যাশ মেমো / ইনভয়েস', 
+  title = 'বেতন রশিদ', 
   student, 
   items, 
   settings, 
-  date,
+  date, 
   memoNumber: customMemoNumber,
   paymentMethod = 'CASH / নগদ'
 }) => {
@@ -117,11 +118,11 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({
 
       {/* Student Details */}
       <div className="mt-3 pt-2 border-t border-gray-100 text-[11px]">
-        <span className="text-gray-500 block text-[10px] font-medium">গ্রাহকের তথ্য</span>
+        <span className="text-gray-500 block text-[10px] font-medium">শিক্ষার্থীর তথ্য</span>
         <div className="text-sm font-bold text-gray-950 leading-tight">{student.name}</div>
         <div className="text-gray-600">{toBng(student.guardianMobile || student.murubbiMobile || '০১৭০০-০০০০০০')}</div>
         <div className="text-gray-500">
-          জামাত: {student.admissionClass || 'উল্লেখ নেই'} • দাখেলা: {toBng(student.id)} • বিভাগ: {student.admissionSection || 'সাধারণ'}
+          জামাত: {student.admissionClass || 'উল্লেখ নেই'} • দাখেলা: {toBng(student.id)}
         </div>
         {addressStr && <div className="text-gray-500">ঠিকানা: {addressStr}</div>}
       </div>
@@ -131,27 +132,33 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({
         <table className="w-full">
           <thead>
             <tr className="border-b border-gray-200 text-gray-700 font-bold pb-1">
-              <th className="text-left pb-1">বইয়ের বিবরণ / ফি</th>
-              <th className="text-center pb-1">শেলফ / মাস</th>
-              <th className="text-center pb-1">পরিমাণ</th>
+              <th className="text-left pb-1">ফি</th>
+              <th className="text-center pb-1">মাস</th>
               <th className="text-right pb-1">মোট</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {items.map((item, idx) => (
-              <tr key={idx} className="py-1">
-                <td className="py-1 text-left">
-                  <div className="font-bold text-gray-950">{item.description}</div>
-                </td>
-                <td className="py-1 text-center">
-                  <span className="inline-block px-1.5 py-0.2 rounded text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-200">
-                    {item.month || item.installment || 'নির্ধারিত'}
-                  </span>
-                </td>
-                <td className="py-1 text-center">{toBng(item.quantity || 1)}</td>
-                <td className="py-1 text-right font-bold">৳ {toBng(item.amount)}</td>
-              </tr>
-            ))}
+            {items.map((item, idx) => {
+              const monthText = item.month 
+                ? (item.days && item.days < 30 && !item.month.includes('দিন') 
+                    ? `${item.month} (${toBng(item.days)} দিন)` 
+                    : item.month)
+                : (item.installment || 'এককালীন');
+
+              return (
+                <tr key={idx} className="py-1">
+                  <td className="py-1 text-left">
+                    <div className="font-bold text-gray-950">{item.description}</div>
+                  </td>
+                  <td className="py-1 text-center">
+                    <span className="inline-block px-1.5 py-0.2 rounded text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-200">
+                      {monthText}
+                    </span>
+                  </td>
+                  <td className="py-1 text-right font-bold">৳ {toBng(item.amount)}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
 
@@ -178,8 +185,8 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({
           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
           <span>পরিশোধিত (PAID) - {paymentMethod}</span>
         </div>
-        <p className="text-[9px] text-gray-500 mt-0.5">
-          ক্যাশ কাউন্টার রসিদ • পরিবর্তনযোগ্য (৭ দিনের মধ্যে মেমোসহ)
+        <p className="text-[10px] text-emerald-900 font-medium mt-0.5">
+          অনুগ্রহ করে রশিদটি যত্নসহকারে সংরক্ষণ করুন।
         </p>
       </div>
 

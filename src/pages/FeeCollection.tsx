@@ -61,33 +61,49 @@ export default function FeeCollection() {
       showAlert('এখনও কোনো পরিশোধিত পেমেন্ট রেকর্ড পাওয়া যায়নি!', 'info');
       return;
     }
-    const items: ReceiptItem[] = payments.map((p: any, idx: number) => ({
-      sl: idx + 1,
-      description: catLabels[p.feeCategory] || p.feeCategory,
-      month: p.month,
-      installment: p.installment ? `${p.installment} কিস্তি` : undefined,
-      amount: p.amount,
-      quantity: 1
-    }));
+    const items: ReceiptItem[] = payments.map((p: any, idx: number) => {
+      const monthDisplay = p.month 
+        ? (p.days && p.days < 30 && !p.month.includes('দিন') 
+            ? `${p.month} (${toBng(p.days)} দিন)` 
+            : p.month) 
+        : undefined;
+
+      return {
+        sl: idx + 1,
+        description: catLabels[p.feeCategory] || p.feeCategory,
+        month: monthDisplay,
+        days: p.days,
+        installment: p.installment ? `${p.installment} কিস্তি` : undefined,
+        amount: p.amount,
+        quantity: 1
+      };
+    });
     setReceiptItems(items);
     setReceiptDate(new Date().toISOString());
-    setReceiptTitle('ক্যাশ মেমো / ইনভয়েস');
+    setReceiptTitle('বেতন রশিদ');
     setReceiptMemo(generateMemoNumber(activeStudent.id + Date.now().toString()));
     setIsReceiptOpen(true);
   };
 
   const openSingleReceipt = (payment: any) => {
+    const monthDisplay = payment.month 
+      ? (payment.days && payment.days < 30 && !payment.month.includes('দিন') 
+          ? `${payment.month} (${toBng(payment.days)} দিন)` 
+          : payment.month) 
+      : undefined;
+
     const items: ReceiptItem[] = [{
       sl: 1,
       description: catLabels[payment.feeCategory] || payment.feeCategory,
-      month: payment.month,
+      month: monthDisplay,
+      days: payment.days,
       installment: payment.installment ? `${payment.installment} কিস্তি` : undefined,
       amount: payment.amount,
       quantity: 1
     }];
     setReceiptItems(items);
     setReceiptDate(payment.date || new Date().toISOString());
-    setReceiptTitle('ক্যাশ মেমো / ইনভয়েস');
+    setReceiptTitle('বেতন রশিদ');
     setReceiptMemo(generateMemoNumber(payment.id || activeStudent?.id));
     setIsReceiptOpen(true);
   };
@@ -96,7 +112,8 @@ export default function FeeCollection() {
     feeKey: keyof Fees, 
     amount: number, 
     month?: string, 
-    installment?: string
+    installment?: string,
+    days?: number
   ) => {
     if (!activeStudent) return;
     
@@ -106,7 +123,8 @@ export default function FeeCollection() {
       feeCategory: feeKey,
       amount,
       month,
-      installment
+      installment,
+      days: days && days < 30 ? days : undefined
     };
 
     const updatedStudent = {
@@ -117,9 +135,6 @@ export default function FeeCollection() {
     await updateStudent(updatedStudent);
     setActiveStudent(updatedStudent);
     showAlert('পেমেন্ট গ্রহণ সম্পন্ন হয়েছে!', 'success');
-
-    // Automatically pop open the digital receipt for this collection
-    openSingleReceipt(newPayment);
   };
 
   const handleUndoPayment = (paymentId: string) => {
@@ -252,19 +267,10 @@ export default function FeeCollection() {
               <button 
                 onClick={openFullReceipt}
                 className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md transition-all flex items-center gap-2 shadow-sm shadow-emerald-600/30 text-sm font-medium"
+                title="রশিদ দেখুন ও প্রিন্ট করুন"
               >
-                <Receipt size={16} />
-                ডিজিটাল মেমো (রসিদ)
-              </button>
-              <button 
-                onClick={() => {
-                  openFullReceipt();
-                  setTimeout(() => window.print(), 150);
-                }}
-                className="px-3.5 py-2 bg-gray-700 hover:bg-gray-800 text-white rounded-md transition-colors flex items-center gap-1.5 shadow shadow-gray-600/20 text-sm"
-              >
-                <Printer size={15} />
-                প্রিন্ট
+                <Printer size={16} />
+                প্রিন্ট বাটন
               </button>
             </div>
           </div>
@@ -283,7 +289,7 @@ export default function FeeCollection() {
           </div>
         </div>
 
-        {/* Digital Receipt Modal (Matches user screenshot) */}
+        {/* Digital Receipt Modal */}
         <DigitalReceiptModal 
           isOpen={isReceiptOpen}
           onClose={() => setIsReceiptOpen(false)}
@@ -298,17 +304,26 @@ export default function FeeCollection() {
         {/* Hidden Print Receipt Component for Direct Printing */}
         {(() => {
           const payments = activeStudent.payments || [];
-          const items: ReceiptItem[] = payments.map((p: any, idx: number) => ({
-            sl: idx + 1,
-            description: catLabels[p.feeCategory] || p.feeCategory,
-            month: p.month,
-            installment: p.installment ? `${p.installment} কিস্তি` : undefined,
-            amount: p.amount,
-            quantity: 1
-          }));
+          const items: ReceiptItem[] = payments.map((p: any, idx: number) => {
+            const monthDisplay = p.month 
+              ? (p.days && p.days < 30 && !p.month.includes('দিন') 
+                  ? `${p.month} (${toBng(p.days)} দিন)` 
+                  : p.month) 
+              : undefined;
+
+            return {
+              sl: idx + 1,
+              description: catLabels[p.feeCategory] || p.feeCategory,
+              month: monthDisplay,
+              days: p.days,
+              installment: p.installment ? `${p.installment} কিস্তি` : undefined,
+              amount: p.amount,
+              quantity: 1
+            };
+          });
           return (
             <PrintReceipt 
-              title="ক্যাশ মেমো / ইনভয়েস"
+              title="বেতন রশিদ"
               student={activeStudent}
               items={items}
               settings={settings}
@@ -328,7 +343,7 @@ const MonthlyPaymentRow = ({ feeKey, label, feeItem, payments, onPay, onUndo, on
   const [selectedMonth, setSelectedMonth] = useState(bngMonths[currentMonthIdx]);
   const [daysCount, setDaysCount] = useState<number>(30); // Default 30 days
   
-  const paymentRecord = payments.find((p: any) => p.feeCategory === feeKey && p.month === selectedMonth);
+  const paymentRecord = payments.find((p: any) => p.feeCategory === feeKey && (p.month === selectedMonth || p.month?.startsWith(selectedMonth)));
   const isPaidMonth = !!paymentRecord;
 
   // Calculate dynamic amount based on days
@@ -372,7 +387,9 @@ const MonthlyPaymentRow = ({ feeKey, label, feeItem, payments, onPay, onUndo, on
         )}
 
         <div className="text-gray-600 dark:text-gray-300 font-medium whitespace-nowrap">
-          {isPaidMonth ? `পরিশোধিত: ${toBng(paymentRecord.amount)} টাকা` : `মোট: ${toBng(dynamicAmount)} টাকা`}
+          {isPaidMonth 
+            ? `পরিশোধিত: ${toBng(paymentRecord.amount)} টাকা ${paymentRecord.days && paymentRecord.days < 30 ? `(${selectedMonth} ${toBng(paymentRecord.days)} দিন)` : `(${selectedMonth})`}` 
+            : `মোট: ${toBng(dynamicAmount)} টাকা ${daysCount < 30 ? `(${selectedMonth} ${toBng(daysCount)} দিন)` : `(${selectedMonth})`}`}
         </div>
       </div>
 
@@ -383,15 +400,15 @@ const MonthlyPaymentRow = ({ feeKey, label, feeItem, payments, onPay, onUndo, on
             <button 
               onClick={() => onViewReceipt(paymentRecord)}
               className="text-xs px-2.5 py-1 bg-emerald-100 text-emerald-800 hover:bg-emerald-200 rounded flex items-center gap-1 transition"
-              title="ডিজিটাল রসিদ দেখুন"
+              title="রশিদ দেখুন"
             >
-              <Receipt size={12} /> মেমো
+              <Receipt size={12} /> রশিদ
             </button>
             <button onClick={() => onUndo(paymentRecord.id)} className="text-xs px-2 py-1 bg-red-100 text-red-600 hover:bg-red-200 rounded transition-colors">ফেরত</button>
           </>
         ) : (
           <button 
-            onClick={() => onPay(feeKey, dynamicAmount, selectedMonth)} 
+            onClick={() => onPay(feeKey, dynamicAmount, selectedMonth, undefined, daysCount < 30 ? daysCount : undefined)} 
             disabled={dynamicAmount <= 0}
             className="px-4 py-2 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300 rounded hover:bg-emerald-200 transition hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed text-sm"
           >
