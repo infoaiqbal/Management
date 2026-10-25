@@ -34,6 +34,40 @@ const numbersBng = [
   'নব্বই', 'একানব্বই', 'বিরানব্বই', 'তিরানব্বই', 'চুরানব্বই', 'পঁচানব্বই', 'ছিয়ানব্বই', 'সাতানব্বই', 'আটানব্বই', 'নিরানব্বই'
 ];
 
+export const bngShortMonths = [
+  'জানু', 'ফেব্রু', 'মার্চ', 'এপ্রিল', 'মে', 'জুন',
+  'জুলাই', 'আগস্ট', 'সেপ্টে', 'অক্টো', 'নভে', 'ডিসে'
+];
+
+export const formatBanglaDateTime = (dateInput?: string | Date): string => {
+  const date = dateInput ? new Date(dateInput) : new Date();
+  if (isNaN(date.getTime())) return '';
+  
+  const day = toBng(date.getDate());
+  const monthName = bngShortMonths[date.getMonth()];
+  const year = toBng(date.getFullYear());
+  
+  let hours = date.getHours();
+  const minutes = date.getMinutes();
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12; // 0 hour is 12
+  
+  const formattedHours = toBng(hours);
+  const formattedMinutes = toBng(minutes < 10 ? '0' + minutes : minutes);
+  
+  return `${day} ${monthName}, ${year}, ${formattedHours}:${formattedMinutes} ${ampm}`;
+};
+
+export const generateMemoNumber = (seed?: string | number, prefix = 'MAD-POS'): string => {
+  if (seed) {
+    const cleanSeed = String(seed).replace(/\D/g, '').slice(-6);
+    return `${prefix}-${toBng(cleanSeed || '১২৩৪৫৬')}`;
+  }
+  const randomNum = Math.floor(100000 + Math.random() * 900000);
+  return `${prefix}-${toBng(randomNum)}`;
+};
+
 export const numberToBanglaWords = (num: number): string => {
   if (num === 0) return 'শূন্য';
   let str = '';
@@ -59,3 +93,4 @@ export const numberToBanglaWords = (num: number): string => {
   }
   return str.trim();
 };
+

@@ -31,7 +31,7 @@ export default function FormList({ onEdit, isPendingView = false }: { onEdit?: (
     return list;
   }, [students, isPendingView, filterSort, filterClass]);
 
-  const uniqueClasses = Array.from(new Set(students.map(s => s.admissionClass).filter(Boolean)));
+  const uniqueClasses: string[] = Array.from(new Set(students.map(s => s.admissionClass).filter((c): c is string => Boolean(c))));
 
   const handleApprove = async (student: Student) => {
     const updated = { ...student, status: 'approved' as const };
@@ -56,7 +56,7 @@ export default function FormList({ onEdit, isPendingView = false }: { onEdit?: (
               onChange={setFilterClass}
               options={[
                 { value: '', label: 'সব জামাত' },
-                ...uniqueClasses.map(cls => ({ value: cls, label: cls }))
+                ...uniqueClasses.map(cls => ({ value: String(cls), label: String(cls) }))
               ]}
               className="px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-[#0f2119] text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-emerald-500"
             />

@@ -1,14 +1,15 @@
 import React from 'react';
-import { Student, Settings } from '../types';
+import { Student, MadrasaSettings } from '../types';
 import { PrintHeader } from './PrintHeader';
 import { getStudentTerms } from '../utils/studentTerms';
 import { toBng } from '../utils/banglaHelpers';
 
 interface Props {
   student: Partial<Student>;
-  settings: Settings;
+  settings: MadrasaSettings;
   isNew: boolean;
 }
+
 
 export const PrintAdmissionForm: React.FC<Props> = ({ student, settings, isNew }) => {
   const gender = settings.studentGender === 'both' ? (student.gender === 'girl' ? 'girls' : 'boys') : settings.studentGender;

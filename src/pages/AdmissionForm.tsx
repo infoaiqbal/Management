@@ -5,8 +5,10 @@ import { toBng, toEng } from '../utils/banglaHelpers';
 import { Student, Address, Fees, FeeItem } from '../types';
 import AddressFields from '../components/AddressFields';
 import CustomSelect from '../components/CustomSelect';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, Receipt } from 'lucide-react';
 import PrintAdmissionForm from '../components/PrintAdmissionForm';
+import { DigitalReceiptModal, ReceiptItem } from '../components/DigitalReceiptModal';
+
 
 /**
  * ==========================================
@@ -64,6 +66,8 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
   const [parentType, setParentType] = useState<'father' | 'mother' | ''>('');
   const [dobFocused, setDobFocused] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isReceiptOpen, setIsReceiptOpen] = useState(false);
   const totalSteps = 6;
 
   const currentGender = settings.studentGender === 'both' ? (formData.gender === 'girl' ? 'girls' : 'boys') : settings.studentGender;
@@ -235,18 +239,7 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
     } else {
       await addStudent(newStudent);
       showAlert(`তথ্য সফলভাবে সংরক্ষিত হয়েছে!`, 'success');
-      
-      // Reset Form
-      setFormData(prev => ({
-        ...prev,
-        id: generateDaquela(),
-        name: '', dob: '', nid: '', fatherName: '', motherName: '', fatherOccupation: '',
-        guardianName: '', guardianRelation: '', guardianOccupation: '', guardianMobile: '', guardianEmail: '',
-        murubbiName: '', murubbiMobile: '', murubbiEmail: '', prevInstitutionName: '', prevInstitutionAddress: '', prevInstitutionStudied: '',
-        admissionClass: ''
-      }));
-      setIdType('');
-      setParentType('');
+      setIsSubmitted(true);
     }
   };
 
@@ -716,9 +709,42 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
                 পরবর্তী ধাপ
               </button>
             ) : (
-              <button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-md transition-colors">
-                {editId ? 'আপডেট করুন' : 'ভর্তি সম্পন্ন করুন'}
-              </button>
+              !isSubmitted ? (
+                <button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-md transition-colors">
+                  {editId ? 'আপডেট করুন' : 'ভর্তি সম্পন্ন করুন'}
+                </button>
+              ) : (
+                <div className="flex flex-wrap gap-3 items-center">
+                  <button 
+                    type="button" 
+                    onClick={() => setIsReceiptOpen(true)}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-5 rounded-md transition-colors flex items-center gap-2 shadow-sm"
+                  >
+                    <Receipt size={18} />
+                    ভর্তি ফি ডিজিটাল মেমো
+                  </button>
+                  <button type="button" onClick={() => {
+                    setFormData({
+                      id: generateDaquela(), 
+                      name: '', dob: '', nid: '', gender: '' as any, bloodGroup: '', isHafiz: 'না',
+                      fatherName: '', motherName: '', fatherOccupation: '',
+                      presentAddress: { division: '', district: '', thana: '', union: '', postOffice: '', village: '' },
+                      permanentAddress: { division: '', district: '', thana: '', union: '', postOffice: '', village: '' },
+                      guardianName: '', guardianRelation: '', guardianOccupation: '', guardianMobile: '', guardianEmail: '',
+                      murubbiName: '', murubbiMobile: '', murubbiEmail: '', prevInstitutionName: '', prevInstitutionAddress: '', prevInstitutionStudied: '',
+                      admissionSection: 'নূরানী', admissionClass: '', studentType: 'আবাসিক', wantsZakat: 'না'
+                    });
+                    setFeesData({});
+                    setIdType('');
+                    setParentType('');
+                    setCurrentStep(1);
+                    setIsSubmitted(false);
+                  }} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-md transition-colors">
+                    নতুন ভর্তি করুন
+                  </button>
+                </div>
+              )
+
             )}
           </div>
         </div>
@@ -732,6 +758,25 @@ export default function AdmissionForm({ editId, onSuccess }: { editId?: string |
         isNew={studentStatus === 'new'}
       />
     </div>
+
+    {/* Digital Receipt Modal */}
+    <DigitalReceiptModal 
+      isOpen={isReceiptOpen}
+      onClose={() => setIsReceiptOpen(false)}
+      title="ভর্তি ফি ক্যাশ মেমো"
+      student={formData as Student}
+      items={[
+        {
+          sl: 1,
+          description: 'ভর্তি ফি ও প্রাথমিক চার্জ',
+          amount: feesData.admission?.amount || 0,
+          quantity: 1
+        }
+      ]}
+      settings={settings}
+      date={new Date().toISOString()}
+    />
     </div>
   );
 }
+

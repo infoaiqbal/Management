@@ -29,11 +29,29 @@
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
-  * {
-    color: black !important;
-  }
+  
   .dark {
     color-scheme: light !important;
   }
+
+  /* Isolate digital receipt printable area when printing receipt */
+  body:has(#digital-receipt-printable) *:not(#digital-receipt-printable, #digital-receipt-printable *) {
+    visibility: hidden;
+  }
+  #digital-receipt-printable, #digital-receipt-printable * {
+    visibility: visible;
+  }
+  #digital-receipt-printable {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    max-width: 105mm !important;
+    margin: 0 auto !important;
+    display: block !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
 }
+
 

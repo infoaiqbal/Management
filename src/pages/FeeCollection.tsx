@@ -1,10 +1,12 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useStudents } from '../store/StudentContext';
 import { getStudentTerms } from '../utils/studentTerms';
-import { toBng, toEng, bngMonths, bngInstallments } from '../utils/banglaHelpers';
+import { toBng, toEng, bngMonths, bngInstallments, generateMemoNumber } from '../utils/banglaHelpers';
 import { FeeItem, Fees } from '../types';
 import CustomSelect from '../components/CustomSelect';
-import { PrintReceipt, ReceiptItem } from '../components/PrintReceipt';
+import { DigitalReceiptModal, ReceiptItem } from '../components/DigitalReceiptModal';
+import { PrintReceipt } from '../components/PrintReceipt';
+import { Receipt, Printer } from 'lucide-react';
 
 /**
  * ==========================================
@@ -17,6 +19,13 @@ export default function FeeCollection() {
   
   const [searchId, setSearchId] = useState('');
   const [activeStudent, setActiveStudent] = useState<any>(null);
+
+  // Digital Receipt Modal State
+  const [isReceiptOpen, setIsReceiptOpen] = useState(false);
+  const [receiptItems, setReceiptItems] = useState<ReceiptItem[]>([]);
+  const [receiptDate, setReceiptDate] = useState<string>('');
+  const [receiptMemo, setReceiptMemo] = useState<string>('');
+  const [receiptTitle, setReceiptTitle] = useState<string>('ক্যাশ মেমো / ইনভয়েস');
 
   const handleSearch = () => {
     const st = students.find(s => 
@@ -34,6 +43,53 @@ export default function FeeCollection() {
       showAlert(`এই নাম্বার বা দাখেলায় কোনো অনুমোদিত ${terms.singular} পাওয়া যায়নি!`, 'warning');
       setActiveStudent(null);
     }
+  };
+
+  const catLabels: Record<string, string> = { 
+    admission: 'ভর্তি ফি', 
+    food: 'খোরাকি', 
+    electricity: 'বিদ্যুৎ বিল', 
+    tuition: 'মাসিক বেতন', 
+    development: 'উন্নয়ন ফি', 
+    library: 'পাঠাগার ফি' 
+  };
+
+  const openFullReceipt = () => {
+    if (!activeStudent) return;
+    const payments = activeStudent.payments || [];
+    if (payments.length === 0) {
+      showAlert('এখনও কোনো পরিশোধিত পেমেন্ট রেকর্ড পাওয়া যায়নি!', 'info');
+      return;
+    }
+    const items: ReceiptItem[] = payments.map((p: any, idx: number) => ({
+      sl: idx + 1,
+      description: catLabels[p.feeCategory] || p.feeCategory,
+      month: p.month,
+      installment: p.installment ? `${p.installment} কিস্তি` : undefined,
+      amount: p.amount,
+      quantity: 1
+    }));
+    setReceiptItems(items);
+    setReceiptDate(new Date().toISOString());
+    setReceiptTitle('ক্যাশ মেমো / ইনভয়েস');
+    setReceiptMemo(generateMemoNumber(activeStudent.id + Date.now().toString()));
+    setIsReceiptOpen(true);
+  };
+
+  const openSingleReceipt = (payment: any) => {
+    const items: ReceiptItem[] = [{
+      sl: 1,
+      description: catLabels[payment.feeCategory] || payment.feeCategory,
+      month: payment.month,
+      installment: payment.installment ? `${payment.installment} কিস্তি` : undefined,
+      amount: payment.amount,
+      quantity: 1
+    }];
+    setReceiptItems(items);
+    setReceiptDate(payment.date || new Date().toISOString());
+    setReceiptTitle('ক্যাশ মেমো / ইনভয়েস');
+    setReceiptMemo(generateMemoNumber(payment.id || activeStudent?.id));
+    setIsReceiptOpen(true);
   };
 
   const handlePayment = async (
@@ -61,6 +117,9 @@ export default function FeeCollection() {
     await updateStudent(updatedStudent);
     setActiveStudent(updatedStudent);
     showAlert('পেমেন্ট গ্রহণ সম্পন্ন হয়েছে!', 'success');
+
+    // Automatically pop open the digital receipt for this collection
+    openSingleReceipt(newPayment);
   };
 
   const handleUndoPayment = (paymentId: string) => {
@@ -89,12 +148,19 @@ export default function FeeCollection() {
       return (
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gray-50 dark:bg-gray-800/30 p-4 rounded-md border border-gray-100 dark:border-gray-800" key={feeKey}>
           <div className="font-medium flex-1 text-gray-800 dark:text-gray-200">{label}</div>
-          <div className="flex-1 text-gray-500">{toBng(feeItem.amount)} টাকা (এককালিন)</div>
+          <div className="flex-1 text-gray-500">{toBng(feeItem.amount)} টাকা (এককালীন)</div>
           <div className="flex-1 print:hidden flex items-center justify-end md:justify-start gap-2">
             {paymentRecord ? (
               <>
                 <span className="text-emerald-600 dark:text-emerald-400 font-medium">পরিশোধিত</span>
-                <button onClick={() => handleUndoPayment(paymentRecord.id)} className="text-xs px-2 py-1 bg-red-100 text-red-600 hover:bg-red-200 rounded transition-colors ml-2">ফেরত</button>
+                <button 
+                  onClick={() => openSingleReceipt(paymentRecord)}
+                  className="text-xs px-2.5 py-1 bg-emerald-100 text-emerald-800 hover:bg-emerald-200 rounded flex items-center gap-1 transition"
+                  title="ডিজিটাল রসিদ দেখুন"
+                >
+                  <Receipt size={12} /> মেমো
+                </button>
+                <button onClick={() => handleUndoPayment(paymentRecord.id)} className="text-xs px-2 py-1 bg-red-100 text-red-600 hover:bg-red-200 rounded transition-colors ml-1">ফেরত</button>
               </>
             ) : (
               <button onClick={() => handlePayment(feeKey, feeItem.amount)} className="px-4 py-2 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300 rounded hover:bg-emerald-200 transition">গ্রহণ করুন</button>
@@ -108,11 +174,33 @@ export default function FeeCollection() {
     }
 
     if (feeItem.type === 'monthly') {
-      return <MonthlyPaymentRow key={feeKey} feeKey={feeKey} label={label} feeItem={feeItem} payments={payments} onPay={handlePayment} onUndo={handleUndoPayment} />;
+      return (
+        <MonthlyPaymentRow 
+          key={feeKey} 
+          feeKey={feeKey} 
+          label={label} 
+          feeItem={feeItem} 
+          payments={payments} 
+          onPay={handlePayment} 
+          onUndo={handleUndoPayment}
+          onViewReceipt={openSingleReceipt}
+        />
+      );
     }
 
     if (feeItem.type === 'installment') {
-      return <InstallmentPaymentRow key={feeKey} feeKey={feeKey} label={label} feeItem={feeItem} payments={payments} onPay={handlePayment} onUndo={handleUndoPayment} />;
+      return (
+        <InstallmentPaymentRow 
+          key={feeKey} 
+          feeKey={feeKey} 
+          label={label} 
+          feeItem={feeItem} 
+          payments={payments} 
+          onPay={handlePayment} 
+          onUndo={handleUndoPayment}
+          onViewReceipt={openSingleReceipt}
+        />
+      );
     }
     
     return null;
@@ -144,23 +232,39 @@ export default function FeeCollection() {
       {activeStudent && (
         <>
         <div className="bg-white dark:bg-[#0f2119] p-6 lg:p-8 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 space-y-6 transition-all print:hidden">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-emerald-50/50 dark:bg-emerald-900/10 p-5 rounded-lg border border-emerald-100 dark:border-emerald-900/20">
-            <div>
-              <div className="text-sm text-gray-500 dark:text-gray-400">নাম</div>
-              <div className="font-semibold text-lg text-gray-800 dark:text-gray-200">{activeStudent.name}</div>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-emerald-50/50 dark:bg-emerald-900/10 p-5 rounded-lg border border-emerald-100 dark:border-emerald-900/20">
+            <div className="grid grid-cols-3 gap-4 flex-1">
+              <div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">নাম</div>
+                <div className="font-semibold text-lg text-gray-800 dark:text-gray-200">{activeStudent.name}</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">জামাত</div>
+                <div className="font-semibold text-lg text-gray-800 dark:text-gray-200">{activeStudent.admissionClass || 'উল্লেখ নেই'}</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">বিভাগ</div>
+                <div className="font-semibold text-lg text-gray-800 dark:text-gray-200">{activeStudent.admissionSection}</div>
+              </div>
             </div>
-            <div>
-              <div className="text-sm text-gray-500 dark:text-gray-400">জামাত</div>
-              <div className="font-semibold text-lg text-gray-800 dark:text-gray-200">{activeStudent.admissionClass || 'উল্লেখ নেই'}</div>
-            </div>
-            <div>
-              <div className="text-sm text-gray-500 dark:text-gray-400">বিভাগ</div>
-              <div className="font-semibold text-lg text-gray-800 dark:text-gray-200">{activeStudent.admissionSection}</div>
-            </div>
-            <div className="flex justify-end items-start">
-              <button onClick={() => window.print()} className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-md transition-colors flex items-center gap-2 shadow shadow-gray-500/20">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                প্রিন্ট রসিদ
+            
+            <div className="flex items-center gap-2 self-end md:self-center">
+              <button 
+                onClick={openFullReceipt}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md transition-all flex items-center gap-2 shadow-sm shadow-emerald-600/30 text-sm font-medium"
+              >
+                <Receipt size={16} />
+                ডিজিটাল মেমো (রসিদ)
+              </button>
+              <button 
+                onClick={() => {
+                  openFullReceipt();
+                  setTimeout(() => window.print(), 150);
+                }}
+                className="px-3.5 py-2 bg-gray-700 hover:bg-gray-800 text-white rounded-md transition-colors flex items-center gap-1.5 shadow shadow-gray-600/20 text-sm"
+              >
+                <Printer size={15} />
+                প্রিন্ট
               </button>
             </div>
           </div>
@@ -179,18 +283,32 @@ export default function FeeCollection() {
           </div>
         </div>
 
-        {/* Print Receipt Section */}
+        {/* Digital Receipt Modal (Matches user screenshot) */}
+        <DigitalReceiptModal 
+          isOpen={isReceiptOpen}
+          onClose={() => setIsReceiptOpen(false)}
+          title={receiptTitle}
+          student={activeStudent}
+          items={receiptItems}
+          settings={settings}
+          date={receiptDate}
+          memoNumber={receiptMemo}
+        />
+
+        {/* Hidden Print Receipt Component for Direct Printing */}
         {(() => {
-          const catLabels: any = { admission: 'ভর্তি ফি', food: 'খোরাকি', electricity: 'বিদ্যুৎ বিল', tuition: 'বেতন', development: 'উন্নয়ন ফি', library: 'পাঠাগার ফি' };
-          const items: ReceiptItem[] = (activeStudent.payments || []).map((p: any, idx: number) => ({
+          const payments = activeStudent.payments || [];
+          const items: ReceiptItem[] = payments.map((p: any, idx: number) => ({
             sl: idx + 1,
-            description: catLabels[p.feeCategory] + (p.installment ? ` (${p.installment} কিস্তি)` : ''),
-            month: p.month || '-',
-            amount: p.amount
+            description: catLabels[p.feeCategory] || p.feeCategory,
+            month: p.month,
+            installment: p.installment ? `${p.installment} কিস্তি` : undefined,
+            amount: p.amount,
+            quantity: 1
           }));
           return (
             <PrintReceipt 
-              title="বেতন রশিদ"
+              title="ক্যাশ মেমো / ইনভয়েস"
               student={activeStudent}
               items={items}
               settings={settings}
@@ -205,7 +323,7 @@ export default function FeeCollection() {
 }
 
 // Subcomponents to handle generic rows
-const MonthlyPaymentRow = ({ feeKey, label, feeItem, payments, onPay, onUndo }: any) => {
+const MonthlyPaymentRow = ({ feeKey, label, feeItem, payments, onPay, onUndo, onViewReceipt }: any) => {
   const currentMonthIdx = new Date().getMonth();
   const [selectedMonth, setSelectedMonth] = useState(bngMonths[currentMonthIdx]);
   const [daysCount, setDaysCount] = useState<number>(30); // Default 30 days
@@ -258,17 +376,24 @@ const MonthlyPaymentRow = ({ feeKey, label, feeItem, payments, onPay, onUndo }: 
         </div>
       </div>
 
-      <div className="xl:w-48 print:hidden flex items-center xl:justify-end gap-2">
+      <div className="xl:w-56 print:hidden flex items-center xl:justify-end gap-2">
         {isPaidMonth ? (
           <>
-            <span className="text-emerald-600 dark:text-emerald-400 font-medium bg-emerald-50 dark:bg-emerald-900/40 px-3 py-1 rounded-full text-sm">পরিশোধিত</span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-medium bg-emerald-50 dark:bg-emerald-900/40 px-2.5 py-1 rounded-full text-xs">পরিশোধিত</span>
+            <button 
+              onClick={() => onViewReceipt(paymentRecord)}
+              className="text-xs px-2.5 py-1 bg-emerald-100 text-emerald-800 hover:bg-emerald-200 rounded flex items-center gap-1 transition"
+              title="ডিজিটাল রসিদ দেখুন"
+            >
+              <Receipt size={12} /> মেমো
+            </button>
             <button onClick={() => onUndo(paymentRecord.id)} className="text-xs px-2 py-1 bg-red-100 text-red-600 hover:bg-red-200 rounded transition-colors">ফেরত</button>
           </>
         ) : (
           <button 
             onClick={() => onPay(feeKey, dynamicAmount, selectedMonth)} 
             disabled={dynamicAmount <= 0}
-            className="px-4 py-2 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300 rounded hover:bg-emerald-200 transition hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300 rounded hover:bg-emerald-200 transition hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed text-sm"
           >
             গ্রহণ করুন
           </button>
@@ -279,9 +404,9 @@ const MonthlyPaymentRow = ({ feeKey, label, feeItem, payments, onPay, onUndo }: 
       </div>
     </div>
   );
-}
+};
 
-const InstallmentPaymentRow = ({ feeKey, label, feeItem, payments, onPay, onUndo }: any) => {
+const InstallmentPaymentRow = ({ feeKey, label, feeItem, payments, onPay, onUndo, onViewReceipt }: any) => {
   const [selectedInst, setSelectedInst] = useState(bngInstallments[0]);
   
   const paymentRecord = payments.find((p: any) => p.feeCategory === feeKey && p.installment === selectedInst);
@@ -304,16 +429,23 @@ const InstallmentPaymentRow = ({ feeKey, label, feeItem, payments, onPay, onUndo
           {isPaidInst ? `পরিশোধিত: ${toBng(paymentRecord.amount)} টাকা` : `পরিমাণ: ${toBng(installmentAmount)} টাকা`}
         </div>
       </div>
-      <div className="xl:w-48 print:hidden flex items-center xl:justify-end gap-2">
+      <div className="xl:w-56 print:hidden flex items-center xl:justify-end gap-2">
         {isPaidInst ? (
           <>
-            <span className="text-emerald-600 dark:text-emerald-400 font-medium bg-emerald-50 dark:bg-emerald-900/40 px-3 py-1 rounded-full text-sm">পরিশোধিত</span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-medium bg-emerald-50 dark:bg-emerald-900/40 px-2.5 py-1 rounded-full text-xs">পরিশোধিত</span>
+            <button 
+              onClick={() => onViewReceipt(paymentRecord)}
+              className="text-xs px-2.5 py-1 bg-emerald-100 text-emerald-800 hover:bg-emerald-200 rounded flex items-center gap-1 transition"
+              title="ডিজিটাল রসিদ দেখুন"
+            >
+              <Receipt size={12} /> মেমো
+            </button>
             <button onClick={() => onUndo(paymentRecord.id)} className="text-xs px-2 py-1 bg-red-100 text-red-600 hover:bg-red-200 rounded transition-colors">ফেরত</button>
           </>
         ) : (
           <button 
             onClick={() => onPay(feeKey, installmentAmount, undefined, selectedInst)} 
-            className="px-4 py-2 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300 rounded hover:bg-emerald-200 transition hover:shadow-md"
+            className="px-4 py-2 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300 rounded hover:bg-emerald-200 transition hover:shadow-md text-sm"
           >
             গ্রহণ করুন
           </button>
@@ -324,5 +456,4 @@ const InstallmentPaymentRow = ({ feeKey, label, feeItem, payments, onPay, onUndo
       </div>
     </div>
   );
-}
-
+};
