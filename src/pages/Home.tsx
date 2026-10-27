@@ -11,8 +11,8 @@ import {
   GraduationCap, 
   BarChart3, 
   TrendingUp, 
-  Sparkles,
-  LayoutDashboard
+  LayoutDashboard,
+  CheckCircle2
 } from 'lucide-react';
 import { toBng, bngMonths } from '../utils/banglaHelpers';
 import { Student } from '../types';
@@ -91,6 +91,7 @@ export default function Home({ onEdit, onNavigate }: { onEdit?: (id: string) => 
     const currentMonth = currentDate.getMonth();
     const currentYear = currentDate.getFullYear();
     const todayStr = currentDate.toISOString().slice(0, 10);
+    const currentBngMonth = bngMonths[currentMonth];
     
     // Admissions this month
     const admissionsThisMonth = approvedStudents.filter(s => {
@@ -135,8 +136,7 @@ export default function Home({ onEdit, onNavigate }: { onEdit?: (id: string) => 
       });
     });
 
-    // Pending fee collections for current month
-    const currentBngMonth = bngMonths[currentMonth];
+    // Pending fee collections per fee category for current month
     const pendingByFee: Record<string, any[]> = {};
 
     approvedStudents.forEach(s => {
@@ -151,7 +151,7 @@ export default function Home({ onEdit, onNavigate }: { onEdit?: (id: string) => 
         if (feeItem.type === 'one-time') {
           isPending = !payments.some(p => p.feeCategory === key);
         } else if (feeItem.type === 'monthly') {
-          isPending = !payments.some(p => p.feeCategory === key && p.month === currentBngMonth);
+          isPending = !payments.some(p => p.feeCategory === key && (p.month === currentBngMonth || p.month?.startsWith(currentBngMonth)));
         } else if (feeItem.type === 'installment') {
           isPending = !payments.some(p => p.feeCategory === key);
         }
@@ -163,6 +163,51 @@ export default function Home({ onEdit, onNavigate }: { onEdit?: (id: string) => 
       });
     });
 
+    // Total number of students who have completed their fee payments for current month vs pending
+    const paidStudentsList: Student[] = [];
+    const pendingStudentsList: Student[] = [];
+
+    approvedStudents.forEach(s => {
+      if (!s.fees) {
+        paidStudentsList.push(s);
+        return;
+      }
+
+      let isStudentPending = false;
+      let hasApplicableFee = false;
+
+      Object.entries(s.fees).forEach(([key, feeItemUnknown]) => {
+        const feeItem = feeItemUnknown as any;
+        if (!feeItem || !feeItem.applicable) return;
+        hasApplicableFee = true;
+
+        const payments = s.payments || [];
+        if (feeItem.type === 'one-time') {
+          if (!payments.some(p => p.feeCategory === key)) {
+            isStudentPending = true;
+          }
+        } else if (feeItem.type === 'monthly') {
+          if (!payments.some(p => p.feeCategory === key && (p.month === currentBngMonth || p.month?.startsWith(currentBngMonth)))) {
+            isStudentPending = true;
+          }
+        } else if (feeItem.type === 'installment') {
+          if (!payments.some(p => p.feeCategory === key)) {
+            isStudentPending = true;
+          }
+        }
+      });
+
+      if (!hasApplicableFee || !isStudentPending) {
+        paidStudentsList.push(s);
+      } else {
+        pendingStudentsList.push(s);
+      }
+    });
+
+    const paidPercentage = totalStudents > 0 
+      ? Math.round((paidStudentsList.length / totalStudents) * 100) 
+      : 0;
+
     return {
       total: totalStudents,
       totalAdmissions: admissionsThisMonth.length,
@@ -171,7 +216,11 @@ export default function Home({ onEdit, onNavigate }: { onEdit?: (id: string) => 
       totalAllCollections,
       categoryTotals,
       studentsByJamat,
-      pendingByFee
+      pendingByFee,
+      currentBngMonth,
+      paidStudentsList,
+      pendingStudentsList,
+      paidPercentage
     };
   }, [students]);
 
@@ -196,7 +245,7 @@ export default function Home({ onEdit, onNavigate }: { onEdit?: (id: string) => 
 
   return (
     <div className="w-full space-y-6">
-      {/* Dashboard Top Header */}
+      {/* Dashboard Top Header (Removed 'বেতন ও ফি সংগ্রহ' button as requested) */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
@@ -205,18 +254,6 @@ export default function Home({ onEdit, onNavigate }: { onEdit?: (id: string) => 
           <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">
             {settings.madrasaName || 'মাদরাসা'} - বিষয়ভিত্তিক তথ্য ও সার্বিক চিত্র
           </p>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          {onNavigate && (
-            <button
-              onClick={() => onNavigate('fee-collection')}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-medium px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-sm transition-all active:scale-95"
-            >
-              <Banknote className="w-4 h-4" />
-              <span>বেতন ও ফি সংগ্রহ</span>
-            </button>
-          )}
         </div>
       </div>
 
@@ -263,48 +300,112 @@ export default function Home({ onEdit, onNavigate }: { onEdit?: (id: string) => 
         {/* ==================== 1. সার্বিক সারসংক্ষেপ (Overview) ==================== */}
         {activeTopic === 'overview' && (
           <div className="space-y-6">
-            {/* 4 Clean Metric Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {/* Summary Cards Grid: includes Total Students, Completed vs Pending Fees, Today's Collection, Monthly Admissions, Routine */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
               
-              {/* Total Students */}
+              {/* Card 1: Total Students */}
               <div 
                 onClick={() => setActiveTopic('students')}
-                className="bg-white dark:bg-[#0f2119] p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 transition-all hover:border-blue-300 cursor-pointer group"
+                className="bg-white dark:bg-[#0f2119] p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 transition-all hover:border-blue-300 cursor-pointer group flex flex-col justify-between"
               >
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-gray-500 dark:text-gray-400 font-medium text-sm">মোট {terms.title}</span>
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 group-hover:scale-105 transition-transform">
-                    <Users className="w-5 h-5" />
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-gray-500 dark:text-gray-400 font-medium text-sm">মোট {terms.title}</span>
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 group-hover:scale-105 transition-transform">
+                      <Users className="w-5 h-5" />
+                    </div>
+                  </div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                      <RollingNumber value={stats.total} />
+                    </span>
+                    <span className="text-gray-500 dark:text-gray-400 text-sm">জন</span>
                   </div>
                 </div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                    <RollingNumber value={stats.total} />
-                  </span>
-                  <span className="text-gray-500 dark:text-gray-400 text-sm">জন</span>
-                </div>
                 <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800/80 flex items-center justify-between text-xs text-blue-600 dark:text-blue-400">
-                  <span>জামাতভিত্তিক তালিকা দেখুন</span>
+                  <span>জামাতভিত্তিক তালিকা</span>
                   <span>&rarr;</span>
                 </div>
               </div>
 
-              {/* Today's Collection */}
-              <div 
-                onClick={() => setActiveTopic('finance')}
-                className="bg-white dark:bg-[#0f2119] p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 transition-all hover:border-emerald-300 cursor-pointer group"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-gray-500 dark:text-gray-400 font-medium text-sm">আজকের ফি আদায়</span>
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition-transform">
-                    <Banknote className="w-5 h-5" />
+              {/* Card 2: Current Month Fee Payment Status: Completed vs Pending (Newly Requested) */}
+              <div className="bg-white dark:bg-[#0f2119] p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 transition-all hover:border-emerald-300 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-gray-500 dark:text-gray-400 font-medium text-xs sm:text-sm">
+                      ফি পরিশোধ ({stats.currentBngMonth})
+                    </span>
+                    <div className="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center text-teal-600 dark:text-teal-400">
+                      <CheckCircle2 className="w-5 h-5" />
+                    </div>
+                  </div>
+
+                  {/* Completed vs Pending Numbers */}
+                  <div className="grid grid-cols-2 gap-2 my-2">
+                    <div 
+                      onClick={() => setModalData({ title: `ফি পরিশোধ সম্পন্ন (${stats.currentBngMonth})`, students: stats.paidStudentsList, showDetails: true })}
+                      className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 cursor-pointer hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition"
+                      title="পরিশোধিত শিক্ষার্থীদের তালিকা"
+                    >
+                      <div className="flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>পরিশোধিত</span>
+                      </div>
+                      <div className="text-lg font-bold text-emerald-800 dark:text-emerald-300 mt-0.5">
+                        <RollingNumber value={stats.paidStudentsList.length} /> <span className="text-[11px] font-normal">জন</span>
+                      </div>
+                    </div>
+
+                    <div 
+                      onClick={() => setModalData({ title: `বকেয়া শিক্ষার্থী (${stats.currentBngMonth})`, students: stats.pendingStudentsList, showDetails: true })}
+                      className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 cursor-pointer hover:bg-rose-100 dark:hover:bg-rose-900/40 transition"
+                      title="বকেয়া শিক্ষার্থীদের তালিকা"
+                    >
+                      <div className="flex items-center gap-1 text-[11px] font-bold text-rose-700 dark:text-rose-400">
+                        <FileClock className="w-3.5 h-3.5" />
+                        <span>বকেয়া</span>
+                      </div>
+                      <div className="text-lg font-bold text-rose-800 dark:text-rose-300 mt-0.5">
+                        <RollingNumber value={stats.pendingStudentsList.length} /> <span className="text-[11px] font-normal">জন</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">৳</span>
-                  <span className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                    <RollingNumber value={stats.todayCollectedAmount} />
-                  </span>
+
+                {/* Progress Bar of Completion */}
+                <div className="space-y-1 pt-1 border-t border-gray-100 dark:border-gray-800/80">
+                  <div className="flex justify-between items-center text-[11px] text-gray-500 dark:text-gray-400">
+                    <span>পরিশোধের হার</span>
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400">{toBng(stats.paidPercentage)}%</span>
+                  </div>
+                  <div className="w-full bg-rose-100 dark:bg-rose-950/60 rounded-full h-2 overflow-hidden flex">
+                    <div 
+                      className="bg-emerald-500 h-full transition-all duration-700" 
+                      style={{ width: `${stats.paidPercentage}%` }} 
+                      title={`পরিশোধিত: ${stats.paidPercentage}%`}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 3: Today's Collection */}
+              <div 
+                onClick={() => setActiveTopic('finance')}
+                className="bg-white dark:bg-[#0f2119] p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 transition-all hover:border-emerald-300 cursor-pointer group flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-gray-500 dark:text-gray-400 font-medium text-sm">আজকের ফি আদায়</span>
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition-transform">
+                      <Banknote className="w-5 h-5" />
+                    </div>
+                  </div>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">৳</span>
+                    <span className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                      <RollingNumber value={stats.todayCollectedAmount} />
+                    </span>
+                  </div>
                 </div>
                 <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800/80 flex items-center justify-between text-xs text-emerald-600 dark:text-emerald-400">
                   <span>{toBng(stats.todayTransactionsCount)} টি রসিদ সংগৃহীত</span>
@@ -312,22 +413,24 @@ export default function Home({ onEdit, onNavigate }: { onEdit?: (id: string) => 
                 </div>
               </div>
 
-              {/* Monthly Admissions */}
+              {/* Card 4: Monthly Admissions */}
               <div 
                 onClick={() => onNavigate && onNavigate('admission')}
-                className="bg-white dark:bg-[#0f2119] p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 transition-all hover:border-purple-300 cursor-pointer group"
+                className="bg-white dark:bg-[#0f2119] p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 transition-all hover:border-purple-300 cursor-pointer group flex flex-col justify-between"
               >
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-gray-500 dark:text-gray-400 font-medium text-sm">চলতি মাসে ভর্তি</span>
-                  <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400 group-hover:scale-105 transition-transform">
-                    <UserPlus className="w-5 h-5" />
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-gray-500 dark:text-gray-400 font-medium text-sm">চলতি মাসে ভর্তি</span>
+                    <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400 group-hover:scale-105 transition-transform">
+                      <UserPlus className="w-5 h-5" />
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                    <RollingNumber value={stats.totalAdmissions} />
-                  </span>
-                  <span className="text-gray-500 dark:text-gray-400 text-sm">জন শিক্ষার্থী</span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                      <RollingNumber value={stats.totalAdmissions} />
+                    </span>
+                    <span className="text-gray-500 dark:text-gray-400 text-sm">জন</span>
+                  </div>
                 </div>
                 <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800/80 flex items-center justify-between text-xs text-purple-600 dark:text-purple-400">
                   <span>নতুন ভর্তি ফরম</span>
@@ -335,22 +438,24 @@ export default function Home({ onEdit, onNavigate }: { onEdit?: (id: string) => 
                 </div>
               </div>
 
-              {/* Class Schedule Period */}
+              {/* Card 5: Class Schedule Period */}
               <div 
                 onClick={() => setActiveTopic('routine')}
-                className="bg-white dark:bg-[#0f2119] p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 transition-all hover:border-amber-300 cursor-pointer group"
+                className="bg-white dark:bg-[#0f2119] p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 transition-all hover:border-amber-300 cursor-pointer group flex flex-col justify-between"
               >
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-gray-500 dark:text-gray-400 font-medium text-sm">দৈনিক ক্লাস রুটিন</span>
-                  <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400 group-hover:scale-105 transition-transform">
-                    <Clock className="w-5 h-5" />
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-gray-500 dark:text-gray-400 font-medium text-sm">দৈনিক ক্লাস রুটিন</span>
+                    <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400 group-hover:scale-105 transition-transform">
+                      <Clock className="w-5 h-5" />
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                    {toBng(CLASS_SCHEDULES.length)}
-                  </span>
-                  <span className="text-gray-500 dark:text-gray-400 text-sm">টি নিয়মিত পিরিয়ড</span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                      {toBng(CLASS_SCHEDULES.length)}
+                    </span>
+                    <span className="text-gray-500 dark:text-gray-400 text-sm">টি নিয়মিত পিরিয়ড</span>
+                  </div>
                 </div>
                 <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800/80 flex items-center justify-between text-xs text-amber-600 dark:text-amber-400">
                   <span>সময়সূচি দেখুন</span>
@@ -358,37 +463,6 @@ export default function Home({ onEdit, onNavigate }: { onEdit?: (id: string) => 
                 </div>
               </div>
 
-            </div>
-
-            {/* Quick Overview Summary Banner */}
-            <div className="bg-emerald-50/70 dark:bg-emerald-950/20 p-5 rounded-2xl border border-emerald-100 dark:border-emerald-900/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0">
-                  <Sparkles className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-emerald-950 dark:text-emerald-200 text-sm sm:text-base">
-                    মাদরাসা সার্বিক হিসাব ও কার্যক্রম সচল রয়েছে
-                  </h4>
-                  <p className="text-xs text-emerald-800 dark:text-emerald-400">
-                    নির্দিষ্ট বিষয় সম্পর্কে বিস্তারিত দেখতে উপরের রেডিও বাটনগুলো ব্যবহার করুন।
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setActiveTopic('students')}
-                  className="px-3 py-1.5 rounded-lg bg-white dark:bg-gray-800 border border-emerald-200 dark:border-emerald-800 text-xs font-semibold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-50 transition"
-                >
-                  শিক্ষার্থী বিন্যাস
-                </button>
-                <button
-                  onClick={() => setActiveTopic('finance')}
-                  className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition"
-                >
-                  ফি ও আদায়
-                </button>
-              </div>
             </div>
           </div>
         )}
@@ -471,8 +545,56 @@ export default function Home({ onEdit, onNavigate }: { onEdit?: (id: string) => 
         {/* ==================== 3. ফি আদায় ও বকেয়া (Finance & Dues) ==================== */}
         {activeTopic === 'finance' && (
           <div className="space-y-6">
-            {/* Top Row: Today's collection and Total all time */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Top Row: Current Month Payment Completion Status + Today's collection + Total all time */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              
+              {/* Completed vs Pending Summary Card */}
+              <div className="bg-white dark:bg-[#0f2119] p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-gray-500 dark:text-gray-400 text-xs font-semibold block">
+                      চলতি মাসের ফি স্ট্যাটাস ({stats.currentBngMonth})
+                    </span>
+                    <CheckCircle2 className="w-4 h-4 text-teal-600" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 my-2">
+                    <div 
+                      onClick={() => setModalData({ title: `ফি পরিশোধ সম্পন্ন (${stats.currentBngMonth})`, students: stats.paidStudentsList, showDetails: true })}
+                      className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 cursor-pointer hover:bg-emerald-100 transition"
+                      title="পরিশোধ সম্পন্ন শিক্ষার্থীদের তালিকা"
+                    >
+                      <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 block">পরিশোধিত</span>
+                      <span className="text-lg font-bold text-emerald-800 dark:text-emerald-300">
+                        {toBng(stats.paidStudentsList.length)} <span className="text-[11px] font-normal">জন</span>
+                      </span>
+                    </div>
+                    <div 
+                      onClick={() => setModalData({ title: `বকেয়া শিক্ষার্থী (${stats.currentBngMonth})`, students: stats.pendingStudentsList, showDetails: true })}
+                      className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 cursor-pointer hover:bg-rose-100 transition"
+                      title="বকেয়া শিক্ষার্থীদের তালিকা"
+                    >
+                      <span className="text-[11px] font-bold text-rose-700 dark:text-rose-400 block">বকেয়া</span>
+                      <span className="text-lg font-bold text-rose-800 dark:text-rose-300">
+                        {toBng(stats.pendingStudentsList.length)} <span className="text-[11px] font-normal">জন</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-1 pt-1 border-t border-gray-100 dark:border-gray-800/80">
+                  <div className="flex justify-between items-center text-[11px] text-gray-500 dark:text-gray-400">
+                    <span>পরিশোধের হার</span>
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400">{toBng(stats.paidPercentage)}%</span>
+                  </div>
+                  <div className="w-full bg-rose-100 dark:bg-rose-950/60 rounded-full h-1.5 overflow-hidden flex">
+                    <div 
+                      className="bg-emerald-500 h-full transition-all duration-700" 
+                      style={{ width: `${stats.paidPercentage}%` }} 
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Today's collection */}
               <div className="bg-white dark:bg-[#0f2119] p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
                 <span className="text-gray-500 dark:text-gray-400 text-xs font-semibold block mb-1">আজকের মোট আদায়</span>
                 <div className="flex items-baseline gap-1.5">
@@ -486,6 +608,7 @@ export default function Home({ onEdit, onNavigate }: { onEdit?: (id: string) => 
                 </p>
               </div>
 
+              {/* Total all time */}
               <div className="bg-white dark:bg-[#0f2119] p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
                 <span className="text-gray-500 dark:text-gray-400 text-xs font-semibold block mb-1">সর্বমোট আদায় (চলতি শিক্ষাবর্ষ)</span>
                 <div className="flex items-baseline gap-1.5">
